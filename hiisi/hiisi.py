@@ -6,7 +6,7 @@ PathValue = namedtuple('PathValue', ['path', 'value'])
 
 
 class HiisiHDF(h5py.File):
-    """hdf5 file handler written on top of h5py.File.
+    """hdf5 file handle written on top of h5py.File.
 
     Module offers easy to use search, and write methods for handling
     HDF5 files.
@@ -46,7 +46,17 @@ class HiisiHDF(h5py.File):
         if HiisiHDF.CACHE['search_attribute'] in obj.attrs:
             return obj.name
 
-    def is_unique_attribute(self, attr):
+    def attr_exists(self, attr):
+        """Returns True if atleast on instance of attribute is found
+        """
+        gen = self.attr_gen(attr)
+        n_instances = len(list(gen))
+        if n_instances > 0:
+            return True
+        else:
+            return False
+
+    def is_unique_attr(self, attr):
         """Returns true if only single instance of attribute is found
         """
         gen = self.attr_gen(attr)
@@ -76,18 +86,10 @@ class HiisiHDF(h5py.File):
         """Method returns the list of all goup paths
         """
         HiisiHDF._clear_cache()
+        self.CACHE['group_paths'].append('/') #Every hdf5 file has a root
         self.visititems(HiisiHDF._is_group)
         return HiisiHDF.CACHE['group_paths']
 
-    def attr_exists(self, attr):
-        """Returns True if atleast on instance of attribute is found
-        """
-        gen = self.attr_gen(attr)
-        n_instances = len(list(gen))
-        if n_instances > 0:
-            return True
-        else:
-            return False
 
     def attr_gen(self, attr):
         """Returns attribute generator that yields namedtuples containing
@@ -103,6 +105,7 @@ class HiisiHDF(h5py.File):
         """
         HiisiHDF._clear_cache()
         HiisiHDF.CACHE['search_attribute'] = attr
+        HiisiHDF._find_attr_paths('/', self['/']) # Check root attributes
         self.visititems(HiisiHDF._find_attr_paths)
         path_attr_gen = (PathValue(attr_path, self[attr_path].attrs.get(attr)) for attr_path in HiisiHDF.CACHE['attribute_paths'])
         return path_attr_gen
@@ -112,6 +115,7 @@ class HiisiHDF(h5py.File):
         """
         Creates h5 file from dictionary that contains the groups, datasets
         and metadata. Method can also be used to append existing hdf5 file.
+        If the file is opened in read only mode, method does nothing.
 
         Examples
         --------
@@ -123,30 +127,31 @@ class HiisiHDF(h5py.File):
         >>> h5f.create_from_filedict(filedict)
 
         """
-        for h5path, path_content in filedict.iteritems():
-            if path_content.has_key('DATASET'):
-                # If path exist, write only metadata
-                if h5path in self:
-                    for key, value in path_content.iteritems():
-                        if key != 'DATASET':
-                            self[h5path].attrs[key] = value
+        if self.mode in ['r+','w', 'w-', 'x', 'a']:
+            for h5path, path_content in filedict.iteritems():
+                if path_content.has_key('DATASET'):
+                    # If path exist, write only metadata
+                    if h5path in self:
+                        for key, value in path_content.iteritems():
+                            if key != 'DATASET':
+                                self[h5path].attrs[key] = value
+                    else:
+                        try:
+                            group = self.create_group(os.path.dirname(h5path))
+                        except ValueError:
+                            group = self[os.path.dirname(h5path)]
+                            pass # This pass has no effect?
+                        new_dataset = group.create_dataset(os.path.basename(h5path), data=path_content['DATASET'])
+                        for key, value in path_content.iteritems():
+                            if key != 'DATASET':
+                                new_dataset.attrs[key] = value
                 else:
-                    try:
-                        group = self.create_group(os.path.dirname(h5path))
+                    try:  
+                        group = self.create_group(h5path)
                     except ValueError:
-                        group = self[os.path.dirname(h5path)]
-                        pass # This pass has no effect?
-                    new_dataset = group.create_dataset(os.path.basename(h5path), data=path_content['DATASET'])
+                        group = self[h5path]
                     for key, value in path_content.iteritems():
-                        if key != 'DATASET':
-                            new_dataset.attrs[key] = value
-            else:
-                try:  
-                    group = self.create_group(h5path)
-                except ValueError:
-                    group = self[h5path]
-                for key, value in path_content.iteritems():
-                    group.attrs[key] = value
+                        group.attrs[key] = value
 
     def search(self, attr, value, tolerance=0):
         """
@@ -188,8 +193,11 @@ class HiisiHDF(h5py.File):
         for path_attr_pair in gen:
             # if attribute is numerical use numerical_value_tolerance in
             # value comparison. If attribute is string require exact match
-            dtype_name = path_attr_pair.value.dtype.name
-            if 'int' in dtype_name or 'float' in dtype_name:
+            if isinstance(path_attr_pair.value, str):
+                type_name = 'str'
+            else:
+                type_name = path_attr_pair.value.dtype.name
+            if 'int' in type_name or 'float' in type_name:
                 if abs(path_attr_pair.value - value) <= tolerance:
                     found_paths.append(path_attr_pair.path)
             else:
