@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 try:
-    from setuptools import setup
+    from setuptools import setup, find_packages
 except ImportError:
-    from distutils.core import setup
+    from distutils.core import setup, find_packages
 
 import sys
 
@@ -20,7 +20,15 @@ setup(name='hiisi',
       description='Tools for easy handling of hdf5 files',
       author='Joonas Karjalainen',
       author_email='joonas.karjalainen@fmi.fi',
-      url='https://github.com/karjaljo/hiisi.git',
-      packages=['hiisi'],
-      install_requires=['numpy', 'h5py'],
+      url='https://github.com/karjaljo/hiisi',
+      license='MIT',
+      classifiers=[
+        'Intended Audience :: Developers',
+        'Topic :: Software Development :: Build Tools',
+        'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python :: 2.7'
+        ],
+      keywords='hdf5',
+      packages=find_packages(exclude=['docs','tests*']),
+      install_requires=['numpy','Cython','h5py'],
     )

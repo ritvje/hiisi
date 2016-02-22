@@ -185,8 +185,6 @@ class Test(unittest.TestCase):
     def test_search_numerical_attribute_within_tolerance(self):
         filename = 'test_search_numerical_attribute.h5'
         with hiisi.HiisiHDF(filename) as h5f:
-            groups = ['/group1', '/group2', '/basegroup/group1']
-
             group = h5f.create_group('/group1')
             group.attrs['attribute']  = 7.3
             group = h5f.create_group('/group2')
@@ -201,8 +199,6 @@ class Test(unittest.TestCase):
     def test_search_numerical_attribute_outside_tolerance(self):            
         filename = 'test_search_numerical_attribute.h5'
         with hiisi.HiisiHDF(filename) as h5f:
-            groups = ['/group1', '/group2', '/basegroup/group1']
-
             group = h5f.create_group('/group1')
             group.attrs['attribute']  = 7.3
             group = h5f.create_group('/group2')

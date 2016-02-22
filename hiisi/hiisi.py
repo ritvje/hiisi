@@ -2,6 +2,7 @@
 import h5py
 import os
 from collections import namedtuple
+__version__ = '0.0.1'
 PathValue = namedtuple('PathValue', ['path', 'value'])
 
 
