@@ -2,7 +2,7 @@
 import h5py
 import os
 from collections import namedtuple
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 PathValue = namedtuple('PathValue', ['path', 'value'])
 
 
@@ -103,7 +103,6 @@ class HiisiHDF(h5py.File):
 
         Examples
         --------
-
         >>> gen = h5f.attr_gen('elangle')
         >>> pair = gen.next()
         >>> print(pair.path)
@@ -122,9 +121,15 @@ class HiisiHDF(h5py.File):
 
     def create_from_filedict(self, filedict):
         """
-        Creates h5 file from dictionary that contains the groups, datasets
-        and metadata. Method can also be used to append existing hdf5 file.
-        If the file is opened in read only mode, method does nothing.
+        Creates h5 file from dictionary containing the file structure.
+        
+        Filedict is a regular dictinary whose keys are hdf5 paths and whose
+        values are dictinaries containing the metadata and datasets. Metadata
+        is given as normal key-value -pairs and dataset arrays are given using
+        'DATASET' key. Datasets must be numpy arrays.
+                
+        Method can also be used to append existing hdf5 file. If the file is
+        opened in read only mode, method does nothing.
 
         Examples
         --------
@@ -163,8 +168,7 @@ class HiisiHDF(h5py.File):
                         group.attrs[key] = value
 
     def search(self, attr, value, tolerance=0):
-        """
-        1. Find paths with a key value match
+        """Find paths with a key value match
 
         Parameters
         ----------
