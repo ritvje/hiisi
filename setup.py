@@ -16,13 +16,14 @@ except ImportError:
     print "Package requirements not fullfilled! h5py is missing"
 
 setup(name='hiisi',
-      version='0.0.2',
+      version='0.0.3',
       description='Tools for easy handling of hdf5 files',
       author='Joonas Karjalainen',
       author_email='joonas.karjalainen@fmi.fi',
       url='https://github.com/karjaljo/hiisi',
       license='MIT',
       classifiers=[
+        'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Build Tools',
         'License :: OSI Approved :: MIT License',
