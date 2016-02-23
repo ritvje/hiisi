@@ -16,7 +16,7 @@ except ImportError:
     print "Package requirements not fullfilled! h5py is missing"
 
 setup(name='hiisi',
-      version='0.0.1',
+      version='0.0.2',
       description='Tools for easy handling of hdf5 files',
       author='Joonas Karjalainen',
       author_email='joonas.karjalainen@fmi.fi',
@@ -28,7 +28,7 @@ setup(name='hiisi',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 2.7'
         ],
-      keywords='hdf5',
+      keywords='hdf5 hdf hiisi',
       packages=find_packages(exclude=['docs','tests*']),
       install_requires=['numpy','Cython','h5py'],
     )
