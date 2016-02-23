@@ -25,7 +25,7 @@ setup(name='hiisi',
       classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
-        'Topic :: Software Development :: Build Tools',
+        'Topic :: Scientific/Engineering',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 2.7'
         ],
