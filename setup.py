@@ -17,11 +17,11 @@ try:
 except ImportError:
     print "Package requirements not fullfilled! h5py is missing"
 
-with open(os.path.join('hiisi','VERSION')) as version_file:
-    version = version_file.read().strip()
+#with open(os.path.join('hiisi','VERSION')) as version_file:
+#    version = version_file.read().strip()
 
 setup(name='hiisi',
-      version=version,
+      version='0.0.4',
       description='Tools for easy handling of hdf5 files',
       author='Joonas Karjalainen',
       author_email='joonas.karjalainen@fmi.fi',

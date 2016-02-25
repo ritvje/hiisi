@@ -1,19 +1,30 @@
 # -*- coding: utf-8 -*-
+"""
+Odim is a module for handling radar data files that follow OPERA ODIM data scheme
+More information about the Odim data scheme can be found:
+http://www.eumetnet.eu/sites/default/files/OPERA2014_O4_ODIM_H5-v2.2.pdf
+"""
 from hiisi import HiisiHDF
 import h5py
 import numpy as np
 import re
 import os
 import string
-"""
-Odim is a module for handling radar data files that follow OPERA ODIM data scheme
-More information about the Odim data scheme can be found:
-http://www.eumetnet.eu/sites/default/files/OPERA2014_O4_ODIM_H5-v2.2.pdf
-"""
+
+class MissingMetadataError(Exception):
+    def __init__(self, message, errors):
+
+        # Call the base class constructor with the parameters it needs
+        super(MissingMetadataError, self).__init__(message)
+        
+        # Now for your custom code...
+        self.errors = errors
+
 
 class OdimPVOL(HiisiHDF):
     """
-    Container for odim polar volumes    
+    Container for odim polar volumes.
+    
     """
     def __init__(self, *args, **kwargs):
         super(OdimPVOL, self).__init__(*args, **kwargs)
@@ -23,10 +34,6 @@ class OdimPVOL(HiisiHDF):
         self.quantities = []
         self.dataset = None
         self._set_elangles()
-        #try:
-        #    self._set_elangles()
-        #except:
-        #    pass
 
     @property
     def dataset(self):        
@@ -49,9 +56,12 @@ class OdimPVOL(HiisiHDF):
         {'A': 0.5, 'C': 1.5, 'B': 0.69999999999999996, 'E': 5.0, 'D': 3.0}
         """
         elang_list = list(self.attr_gen('elangle'))
-        elevation_angles = sorted(zip(*elang_list)[1])
-        n_elangles = len(elevation_angles)
-        self.elangles = dict(zip(list(string.ascii_uppercase[:n_elangles]), elevation_angles))
+        try:
+            elevation_angles = sorted(zip(*elang_list)[1])
+            n_elangles = len(elevation_angles)
+            self.elangles = dict(zip(list(string.ascii_uppercase[:n_elangles]), elevation_angles))
+        except IndexError:
+            self.elangles = {}
         
     def select_dataset(self, elangle, quantity):
         """
@@ -106,23 +116,25 @@ class OdimPVOL(HiisiHDF):
                     self.dataset = self[dataset_path].ref
                     return dataset_path
 
-    def sector(self, start_ray, end_ray=None, start_distance=None, end_distance=None):
+    def sector(self, start_ray, end_ray, start_distance=None, end_distance=None):
         """Slices a sector from selected dataset
         
         Parameters
         ----------
         start_ray : int
-            Starting ray of of the slice first ray i 0
+            Starting ray of of the slice first ray is 0
+        end_ray : int
+            End ray of the slice, last ray is 359
             
         Keywords
         --------
-        end_ray : int
-            End ray of the slice, if not given the slice is single ray
-            
         start_distance : int
-            Starting distance of the slice, if not defined sector starts form zero
+            Starting distance of the slice, if not defined sector starts
+            form zero
         end_distance : int
-            Ending distance of the slice, if not defined sector continues to the end
+            Ending distance of the slice, if not defined sector continues to
+            the end last ray of the dataset
+            
         Returns
         -------
         sector : ndarray
@@ -134,7 +146,7 @@ class OdimPVOL(HiisiHDF):
         
         >>> pvol = odimPVOL('pvol.h5')
         >>> pvol.select_dataset('A', 'DBZH')
-        >>> ray = pvol.sector(10)
+        >>> ray = pvol.sector(10, 10)
 
         Get sector from selected dataset, rays from 100 to 200
         at distances from 5 km to 10 km.
@@ -154,7 +166,11 @@ class OdimPVOL(HiisiHDF):
             raise ValueError('start_ray must be non negative')
             
         # Define the slicing indexes along the ray
-        rscale = self.get_attr('rscale')
+        try:
+            rscale = self.attr_gen('rscale').next().value
+        except:
+            raise MissingMetadataError
+            
         if start_distance is None:
             start_index = 0
         else:
@@ -165,13 +181,15 @@ class OdimPVOL(HiisiHDF):
             end_index = int(end_distance / rscale) 
         
         if end_ray is None:
+            # NOTE: returns one dimensional array
+            #       Should it always return 2d array?
             sector = self.dataset[start_ray, start_index:end_index]
         else:
-            if start_ray < end_ray:
-                sector = self.dataset[start_ray:end_ray, start_index:end_index]
+            if start_ray <= end_ray:
+                sector = self.dataset[start_ray:end_ray+1, start_index:end_index]
             else:
                 sector1 = self.dataset[start_ray:, start_index:end_index]
-                sector2 = self.dataset[:end_ray, start_index:end_index]
+                sector2 = self.dataset[:end_ray+1, start_index:end_index]
                 sector = np.concatenate((sector1, sector2), axis=0)
         return sector
         
@@ -184,11 +202,11 @@ class OdimPVOL(HiisiHDF):
             sliced quantity
         start_ray : int
             starting ray of the sub volume
+        end_ray : int
+            ending ray of the sub volume
             
         Keywords
         --------
-        end_ray : int
-            ending ray of the sub volume
         start_distance : int
             start distance from the radar in meters
         end_distance : int 
@@ -239,7 +257,7 @@ class OdimCOMP(HiisiHDF):
     """
     def __init__(self, *args, **kwargs):
         super(OdimCOMP, self).__init__(*args, **kwargs)            
-        if self.get_attr('object') != 'COMP':
+        if len(self.search('object', 'COMP')) == 0:
             raise ValueError('Given data file is not ODIM composite')
         self._dataset = None
         
@@ -255,6 +273,9 @@ class OdimCOMP(HiisiHDF):
         """
         Selects the matching dataset and returns its path.
         
+        After the dataset has been selected, its values can be accessed trough
+        dataset member variable.
+        
         Parameters
         ----------
         quantity : str
@@ -265,15 +286,22 @@ class OdimCOMP(HiisiHDF):
         Select DBZH composite        
         
         >>> comp = OdimCOMP('comp.h5')
-        >>> dataset = comp.select_dataset('DBZH')
-        >>> print(dataset)
+        >>> dataset_path = comp.select_dataset('DBZH')
+        >>> print(dataset_path)
         >>> '/dataset1/data1/data'
-        
+        >>> print(comp.dataset)
+        [[255 255 255 ..., 255 255 255]
+        [255 255 255 ..., 255 255 255]
+        [255 255 255 ..., 255 255 255]
+        ..., 
+        [255 255 255 ..., 255 255 255]
+        [255 255 255 ..., 255 255 255]
+        [255 255 255 ..., 255 255 255]]
         """
         quantity_path = None
-        for x in self.get_attrs('quantity'):
-            if x[1] == quantity:
-                quantity_path = x[0]
+        search_results = self.search('quantity', quantity)
+        if len(search_results) == 1:
+            quantity_path = search_results[0]
         
         if quantity_path is not None:
             dataset_path = re.search( '^/dataset[0-9]+/data[0-9]+/', quantity_path).group(0)

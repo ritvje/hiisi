@@ -9,7 +9,7 @@ import os
 class Test(unittest.TestCase):
     
     def setUp(self):
-        self.odim_file = OdimPVOL('test_data/pvol.h5', 'r')
+        self.odim_file = hiisi.OdimPVOL('test_data/pvol.h5', 'r')
         
     def tearDown(self):
         self.odim_file.close()
@@ -36,35 +36,50 @@ class Test(unittest.TestCase):
     def test_select_dataset_no_dataset_found(self):
         self.assertIsNone(self.odim_file.select_dataset('X', 'DBZH'))
         self.assertIsNone(self.odim_file.select_dataset('A', 'XXXX'))
-    """
+ 
+    def test_sector_valid_indexes(self):
+        filedict = {'/dataset1/data1/data':{'DATASET':np.arange(10*10).reshape((10,10))},
+                    '/dataset1/where':{'elangle':0.5, 'rscale':500},
+                    '/dataset1/data1/what':{'quantity':'DBZH'}
+                    }        
         
-    def test_get_dataset(self):
-        dataset_path = self.odim_file.get_dataset('A', 'DBZH')        
-        self.assertEqual(dataset_path, '/dataset1/data1/data')        
-    """
-    
-    def test_OdimPVOL_create_from_filedict(self):
-        dataset1 = np.arange(9).reshape(3,3)
-        dataset2 = np.ones_like(dataset1)   
-        with odim.OdimPVOL('test.h5', 'w') as pvol:
-            d = {'/what':{'date':'20151212'},
-                 '/dataset1/data1/data':{'A':1, 'B':'b', 'DATASET':dataset1},
-                 '/dataset1/data2/data':{'C':1, 'D':'b', 'DATASET':dataset2}}
-            pvol.create_from_filedict(d)
-    
-        with odim.OdimPVOL('test.h5', 'r') as pvol:
-            self.assertEqual('20151212' , pvol['/what'].attrs['date'])
-            self.assertEqual(1, pvol['/dataset1/data1/data'].attrs['A'])
-            self.assertEqual('b', pvol['/dataset1/data1/data'].attrs['B'] )
-            np.testing.assert_array_equal(dataset1, pvol['/dataset1/data1/data'][:])
-            self.assertEqual(1, pvol['/dataset1/data2/data'].attrs['C'])
-            self.assertEqual('b', pvol['/dataset1/data2/data'].attrs['D'])
-            np.testing.assert_array_equal(dataset2, pvol['/dataset1/data2/data'][:])
+        with hiisi.OdimPVOL('test_pvol.h5', 'w') as pvol:
+            pvol.create_from_filedict(filedict)
+            pvol._set_elangles()
+            pvol.select_dataset('A', 'DBZH')
+            # Single ray slice
+            np.testing.assert_array_equal(pvol.sector(0, 0), np.arange(10).reshape(1, 10)) 
+            # Multiple rays slice
+            np.testing.assert_array_equal(pvol.sector(0, 1), np.arange(20).reshape((2, 10)))
+            # Multiple rays, start distance given
+            comparison_array = np.array([[4,  5,  6,  7,  8,  9],
+                                         [14, 15, 16, 17, 18, 19]])
+            np.testing.assert_array_equal(pvol.sector(0, 1, 2000), comparison_array)
+            # Multiple rays, start and end distances given
+            comparison_array = np.array([[4,  5,  6,  7],
+                                         [14, 15, 16, 17]])
+            np.testing.assert_array_equal(pvol.sector(0, 1, 2000, 4000), comparison_array)
+            # Start slice bigger than end slice i.e. slice from 359->
+            comparison_array = np.array([[80, 81, 82, 83, 84, 85, 86, 87, 88, 89],
+                                         [90, 91, 92, 93, 94, 95, 96, 97, 98, 99],
+                                            [ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9],
+                                            [10, 11, 12, 13, 14, 15, 16, 17, 18, 19]])
+
+            np.testing.assert_array_equal(pvol.sector(8, 1), comparison_array)           
+                        
             
-    def test_OdimPVOL_get_dataset_no_match(self):    
-        dataset_path = self.odim_file.get_dataset(elangle='A', quantity='TESTQUANTITY' )
-        self.assertEqual(None, dataset_path)
+    def test_sector_invalid_indexes(self):
+        filedict = {'/dataset1/data1/data':{'DATASET':np.arange(10*10).reshape((10,10))},
+                    '/dataset1/where':{'elangle':0.5, 'rscale':500},
+                    '/dataset1/data1/what':{'quantity':'DBZH'}
+                    }        
         
+        with hiisi.OdimPVOL('test_pvol.h5', 'w') as pvol:
+            pvol.create_from_filedict(filedict)
+            pvol._set_elangles()
+            pvol.select_dataset('A', 'DBZH')
+            
+            # 
             
         
 if __name__=='__main__':
