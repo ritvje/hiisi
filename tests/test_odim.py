@@ -2,23 +2,40 @@
 import unittest
 import env
 import h5py
-from hiisi import odim
+import hiisi
 import numpy as np
 import os
 
 class Test(unittest.TestCase):
     
     def setUp(self):
-        self.odim_file = OdimPVOL('test_data/201207292000_radar.raw.fivan.andre_ANDRE=FMI_DATA=ALL.h5', 'r')
+        self.odim_file = OdimPVOL('test_data/pvol.h5', 'r')
         
     def tearDown(self):
         self.odim_file.close()
-    """    
+        
     def test__set_elangles(self):
-        self.assertDictEqual(self.odim_file.elangles, {'A':0.5, 'B':0.7, 'C':1.5, 'D':3.0, 'E':5.0})
+        self.odim_file._set_elangles()
+        comparison_dict = {'A':self.odim_file['/dataset1/where'].attrs['elangle'],
+                           'B':self.odim_file['/dataset2/where'].attrs['elangle'],
+                            'C':self.odim_file['/dataset3/where'].attrs['elangle'],
+                            'D':self.odim_file['/dataset4/where'].attrs['elangle'],
+                            'E':self.odim_file['/dataset5/where'].attrs['elangle']
+                            }
+        self.assertDictEqual(self.odim_file.elangles, comparison_dict)
     
     def test__set_elangles_no_elangles(self):        
-    """
+        with hiisi.OdimPVOL('empty_file.h5') as pvol:
+            self.assertDictEqual(pvol.elangles, {})
+            
+    def test_select_dataset(self):
+        self.assertEqual(self.odim_file.select_dataset('A', 'DBZH'), '/dataset1/data2/data')
+        self.assertEqual(self.odim_file.select_dataset('B', 'VRAD'), '/dataset2/data3/data')
+        self.assertEqual(self.odim_file.select_dataset('E', 'RHOHV'), '/dataset5/data7/data')
+        
+    def test_select_dataset_no_dataset_found(self):
+        self.assertIsNone(self.odim_file.select_dataset('X', 'DBZH'))
+        self.assertIsNone(self.odim_file.select_dataset('A', 'XXXX'))
     """
         
     def test_get_dataset(self):

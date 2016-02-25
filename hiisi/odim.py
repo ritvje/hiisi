@@ -22,10 +22,11 @@ class OdimPVOL(HiisiHDF):
         self.elangles = {}
         self.quantities = []
         self.dataset = None
-        try:
-            self._set_elangles()
-        except:
-            pass
+        self._set_elangles()
+        #try:
+        #    self._set_elangles()
+        #except:
+        #    pass
 
     @property
     def dataset(self):        
@@ -38,13 +39,17 @@ class OdimPVOL(HiisiHDF):
     def _set_elangles(self):
         """Sets the values of instance variable elangles.
         
-        Method analyses the loaded file and checks what elevation angles it
-        contains. Method creates a dictionary that contains uppercase letters
-        as keys and elevation angles as values in acending order
-        i.e. elagles={'A':0.3, 'B':0.5, C:'0.7', ...}
+        Method creates a dictionary containing the elangles of the pvol file.
+        Elangles are ordered in acending order using uppercase letters as keys
+        
+        Examples
+        --------
+        >>> pvol = OdimPVOL('pvol.h5')
+        >>> print(pvol.elangles)
+        {'A': 0.5, 'C': 1.5, 'B': 0.69999999999999996, 'E': 5.0, 'D': 3.0}
         """
-        elevation_angles = self.get_attrs('elangle')
-        elevation_angles = sorted(zip(*elevation_angles)[1])
+        elang_list = list(self.attr_gen('elangle'))
+        elevation_angles = sorted(zip(*elang_list)[1])
         n_elangles = len(elevation_angles)
         self.elangles = dict(zip(list(string.ascii_uppercase[:n_elangles]), elevation_angles))
         
@@ -62,7 +67,7 @@ class OdimPVOL(HiisiHDF):
         Returns
         -------
         dataset : str
-            Path of the matching dataset
+            Path of the matching dataset or None if no dataset is found.
             
         Examples
         --------
@@ -75,20 +80,24 @@ class OdimPVOL(HiisiHDF):
 
         """
         elangle_path = None
-        for x in self.get_attrs('elangle'):
-            if x[1] == self.elangles[elangle]:
-                elangle_path = x[0] 
-                break
+        try:
+            search_results = self.search('elangle', self.elangles[elangle])           
+            if len(search_results) == 1:            
+                elangle_path = search_results[0]
+        except KeyError:
+            #print('Elevation angle {} is not found from file'.format(elangle))
+            #print('File contains elevation angles:{}'.format(self.elangles))
+            return None
             
         if elangle_path is not None:
             dataset_root = re.search( '^/dataset[0-9]+/', elangle_path).group(0)
             
             quantity_path = None
-            for x in self.get_attrs('quantity'):
-                if x[1] == quantity:
-                    if dataset_root in x[0]:
-                        quantity_path = x[0]
-                        break
+            search_results = self.search('quantity', quantity)
+            for path in search_results:
+                if dataset_root in path:
+                    quantity_path = path
+                    break
                     
             if quantity_path is not None:
                 dataset_path = re.search('^/dataset[0-9]+/data[0-9]/', quantity_path).group(0)            
@@ -96,7 +105,7 @@ class OdimPVOL(HiisiHDF):
                 if isinstance(self[dataset_path], h5py.Dataset):
                     self.dataset = self[dataset_path].ref
                     return dataset_path
-    
+
     def sector(self, start_ray, end_ray=None, start_distance=None, end_distance=None):
         """Slices a sector from selected dataset
         
