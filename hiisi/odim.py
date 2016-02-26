@@ -237,7 +237,7 @@ class OdimPVOL(HiisiHDF):
         >>> pvol = odimPVOL('pvol.h5')
         >>> pvol.volume_slice('DBZH', 10, 20, 5000, 10000, ['A', 'B'])
         
-        Print the values of highest elevation angle
+        Print the values of highest elevation angle layer
         >>> volume_slice = pvol.volume_slice('DBZH', 10, 20)
         >>> print(volume_slice[:, :, 0])
         """
@@ -326,7 +326,7 @@ class OdimCOMP(HiisiHDF):
                 self.dataset = self[dataset_path].ref
                 return dataset_path        
                      
-                     
+'''                     
 class OdimVPR(HiisiHDF):
     """
     Container class for odim vpr files
@@ -349,6 +349,6 @@ class OdimRHI(HiisiHDF):
         if self.get_attr('object') != 'RHI':
             raise ValueError('Given data file is not RHI composite')
         self._dataset = None
-    
+'''
 
             
