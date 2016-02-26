@@ -117,7 +117,11 @@ class OdimPVOL(HiisiHDF):
                     return dataset_path
 
     def sector(self, start_ray, end_ray, start_distance=None, end_distance=None):
-        """Slices a sector from selected dataset
+        """Slices a sector from the selected dataset.
+        
+        Slice contains the start and end rays. If start and end rays are equal 
+        one ray is returned. If the start_ray is greater than the end_ray
+        slicing continues over the 359-0 border.  
         
         Parameters
         ----------
@@ -193,7 +197,7 @@ class OdimPVOL(HiisiHDF):
                 sector = np.concatenate((sector1, sector2), axis=0)
         return sector
         
-    def sub_volume(self, quantity, start_ray, end_ray, start_distance=None, end_distance=None, elangles=[]):
+    def volume_slice(self, quantity, start_ray, end_ray, start_distance=None, end_distance=None, elangles=[]):
         """Slices a sub volume from the file
         
         Parameters
@@ -214,39 +218,51 @@ class OdimPVOL(HiisiHDF):
         elangles : list
             list of elangles included in slicing, if left empty all the angles
             are included.
+        Returns
+        -------
+        sub_volume : ndarray
+            a three dimensional numpy ndarray 
             
         Examples
         --------
-        Get subvolume containing all the datapoints between rays 10 and 20 at
+        Slice a sub volume containing all the datapoints between rays 10 and 20 at
         all elevation angles
         
         >>> pvol = odimPVOL('pvol.h5')
-        >>> pvol.sub_volume('DBZH', 10, 20)
+        >>> pvol.volume_slice('DBZH', 10, 20)
 
         Get subvolume containing the datapoints between rays 10 and 20 from
         distances 5 km to 10 km at first two elevation angles
         
         >>> pvol = odimPVOL('pvol.h5')
-        >>> pvol.sub_volume('DBZH', 10, 20, 5000, 10000, ['A', 'B'])
+        >>> pvol.volume_slice('DBZH', 10, 20, 5000, 10000, ['A', 'B'])
         
+        Print the values of highest elevation angle
+        >>> volume_slice = pvol.volume_slice('DBZH', 10, 20)
+        >>> print(volume_slice[:, :, 0])
         """
         # Elangles are traversed from highest angle to lowest
         # and the size of the highest angle is used as limiting factor for the 
         # along the ray
         if elangles == []:
-            elangles = self.elangles.keys()
-        
+            elangles = sorted(self.elangles.keys())
+
         elangles = reversed(elangles)            
         self.select_dataset(elangles.next(), quantity)
         sub_volume = self.sector(start_ray, end_ray, start_distance, end_distance)
 
         height, width = sub_volume.shape
-        
+        """"
+        # Define the slicing indexes along the ray
+        try:
+            rscale = self.attr_gen('rscale').next().value
+        except:
+            raise MissingMetadataError
+        """
         for elangle in elangles:
             self.select_dataset(elangle, quantity)
             layer = self.sector(start_ray, end_ray, start_distance, end_distance)
-            
-            sub_volume = np.dstack((sub_volume, layer))
+            sub_volume = np.dstack((sub_volume, layer[:, :width]))
     
         return sub_volume
 
