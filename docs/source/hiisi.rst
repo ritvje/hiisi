@@ -20,6 +20,8 @@ specialized file handles for different types of data files. An example of custom
 data file handle is the hiisi.odim module that contains file handles for reading
 weather radar data files that follow the OPERA odim data format.
 
+.. _h5py: http://www.h5py.org/
+
 .. automodule:: hiisi.hiisi
 
 .. autoclass:: HiisiHDF

@@ -95,8 +95,8 @@ class OdimPVOL(HiisiHDF):
             if len(search_results) == 1:            
                 elangle_path = search_results[0]
         except KeyError:
-            #print('Elevation angle {} is not found from file'.format(elangle))
-            #print('File contains elevation angles:{}'.format(self.elangles))
+            print('Elevation angle {} is not found from file'.format(elangle))
+            print('File contains elevation angles:{}'.format(self.elangles))
             return None
             
         if elangle_path is not None:
@@ -116,7 +116,7 @@ class OdimPVOL(HiisiHDF):
                     self.dataset = self[dataset_path].ref
                     return dataset_path
 
-    def sector(self, start_ray, end_ray, start_distance=None, end_distance=None):
+    def sector(self, start_ray, end_ray, start_distance=None, end_distance=None, units='b'):
         """Slices a sector from the selected dataset.
         
         Slice contains the start and end rays. If start and end rays are equal 
@@ -138,6 +138,11 @@ class OdimPVOL(HiisiHDF):
         end_distance : int
             Ending distance of the slice, if not defined sector continues to
             the end last ray of the dataset
+        units : str            
+            Units used in distance slicing. Option 'b' means that bin number
+            is used as index. Option 'm' means that meters are used and the
+            slicing index is calculated using bin width.
+             
             
         Returns
         -------
@@ -169,34 +174,39 @@ class OdimPVOL(HiisiHDF):
         if start_ray < 0:
             raise ValueError('start_ray must be non negative')
             
-        # Define the slicing indexes along the ray
-        try:
-            rscale = self.attr_gen('rscale').next().value
-        except:
-            raise MissingMetadataError
+
             
         if start_distance is None:
-            start_index = 0
+            start_distance_index = 0
         else:
-            start_index = int(start_distance / rscale)
+            if units == 'b':
+                start_distance_index = start_distance
+            elif units == 'm': 
+                try:
+                    rscale = self.attr_gen('rscale').next().value
+                except:
+                    raise MissingMetadataError            
+                start_distance_index = int(start_distance / rscale)
         if end_distance is None:
-            end_index = self.dataset.shape[1]
+            end_distance_index = self.dataset.shape[1]
         else:
-            end_index = int(end_distance / rscale) 
-        
+            if units == 'b':
+                end_distance_index = end_distance           
+            elif units == 'm':             
+                end_distance_index = int(end_distance / rscale) 
+
         if end_ray is None:
-            # NOTE: returns one dimensional array
-            #       Should it always return 2d array?
-            sector = self.dataset[start_ray, start_index:end_index]
+            sector = self.dataset[start_ray, start_distance_index:end_distance_index]
         else:
             if start_ray <= end_ray:
-                sector = self.dataset[start_ray:end_ray+1, start_index:end_index]
+                sector = self.dataset[start_ray:end_ray+1, start_distance_index:end_distance_index]
             else:
-                sector1 = self.dataset[start_ray:, start_index:end_index]
-                sector2 = self.dataset[:end_ray+1, start_index:end_index]
+                sector1 = self.dataset[start_ray:, start_distance_index:end_distance_index]
+                sector2 = self.dataset[:end_ray+1, start_distance_index:end_distance_index]
                 sector = np.concatenate((sector1, sector2), axis=0)
         return sector
         
+    '''    
     def volume_slice(self, quantity, start_ray, end_ray, start_distance=None, end_distance=None, elangles=[]):
         """Slices a sub volume from the file
         
@@ -265,7 +275,7 @@ class OdimPVOL(HiisiHDF):
             sub_volume = np.dstack((sub_volume, layer[:, :width]))
     
         return sub_volume
-
+    '''
 
 class OdimCOMP(HiisiHDF):
     """

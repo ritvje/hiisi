@@ -54,11 +54,13 @@ class Test(unittest.TestCase):
             # Multiple rays, start distance given
             comparison_array = np.array([[4,  5,  6,  7,  8,  9],
                                          [14, 15, 16, 17, 18, 19]])
-            np.testing.assert_array_equal(pvol.sector(0, 1, 2000), comparison_array)
+            np.testing.assert_array_equal(pvol.sector(0, 1, 2000, units='m'), comparison_array)
+            np.testing.assert_array_equal(pvol.sector(0, 1, 4), comparison_array)
             # Multiple rays, start and end distances given
             comparison_array = np.array([[4,  5,  6,  7],
                                          [14, 15, 16, 17]])
-            np.testing.assert_array_equal(pvol.sector(0, 1, 2000, 4000), comparison_array)
+            np.testing.assert_array_equal(pvol.sector(0, 1, 2000, 4000, units='m'), comparison_array)
+            np.testing.assert_array_equal(pvol.sector(0, 1, 4, 8), comparison_array)
             # Start slice bigger than end slice i.e. slice from 359->
             comparison_array = np.array([[80, 81, 82, 83, 84, 85, 86, 87, 88, 89],
                                          [90, 91, 92, 93, 94, 95, 96, 97, 98, 99],
@@ -80,6 +82,7 @@ class Test(unittest.TestCase):
             pvol.select_dataset('A', 'DBZH')
             
             # 
+    '''        
     def test_volume_slice(self):
         
         dataset1 = np.arange(10*10).reshape((10,10))
@@ -115,7 +118,7 @@ class Test(unittest.TestCase):
             pvol._set_elangles()
             volume_slice = pvol.volume_slice('DBZH', 0, 3)
             np.testing.assert_array_equal(volume_slice, comparison_array)            
-                                
+    '''                         
         
         
 if __name__=='__main__':
