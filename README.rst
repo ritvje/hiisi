@@ -68,7 +68,7 @@ with a certain value or a value that is within the given tolerance::
 Installation
 ------------
 Hiisi is dependent on numpy and h5py packages. If you have these dependencies already 
-installed you can simply run ''pip install hiisi''.
+installed you can simply run ´´pip install hiisi´´.
 
 Installing the dependencies and the package
 ''install pip''
