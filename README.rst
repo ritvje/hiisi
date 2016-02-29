@@ -4,9 +4,66 @@ The main idea behind hiisi module is to make the handling of hdf5 -files as
 fluent as possible. Module contains higher level tools such as search and
 write methods that are build on top of h5py module.
 
+HiisiHDF file handle is built of top of h5py.File class and it forms the base of
+the module. HiisiHDF makes it possible to search metadata from the file
+without any prior knowledge of the structure of the file. In addition, it contains
+methods for listing the datasets and groups of the file and a conveinient method
+for creating new hdf5 files and for expanding files that already contain data.
+
+File creation method uses nested dictionaries, referred to as filedicts, for saving
+the hdf5-file structure. The keys of the outer layer of the filedict are the group
+and dataset paths. The value of each path is a dictionary containing the related
+metadata. If the path contains a dataset, a key 'DATASET' is used to indicate the data array.
+ 
+HiisiHDF can be used as such or it can be used as base class for creating more
+specialized file handles for different types of data files. An example of custom
+data file handle is the hiisi.odim module that contains file handles for reading
+weather radar data files that follow the OPERA odim data format.
+
 Examples
 --------
+Get a list of datasets::
 
+    >>> h5f = HiisiHDF('data.h5')
+    >>> print(h5f.list_datasets())
+    ['/dataset1/data1/data', '/dataset1/data2/data', ...]
+    >>>
+
+Retrieve all instances of certain attribute::
+
+    >>> gen = h5f.attr_gen('elangle')
+    >>> pair = gen.next()
+    >>> print(pair.path)
+    '/dataset1/where'
+    >>> print(pair.value)
+    0.5
+    >>>
+
+Create new hdf5 file with content::
+
+    >>> h5f = HiisiHDF('newfile.h5', 'w')
+    >>> filedict = {'/':{'attr1':'A'},
+                    '/dataset1/data1/data':{'DATASET':np.zeros(100), 'quantity':'emptyarray'}, 'B':'b'}
+    >>> h5f.create_from_filedict(filedict)
+    >>>
+
+Find the name of the groups that contains an attribute with a certain value::
+
+    >>> h5f = HiisiHDF('data.h5')
+    >>> h5f.search('quantity', 'DBZH')
+    [u'/dataset1/data2/what',
+     u'/dataset2/data2/what',
+     u'/dataset3/data2/what',
+     u'/dataset4/data2/what',
+     u'/dataset5/data2/what']
+    >>>
+
+Find the name of the groups that contain a numerical attribute with a certain value::
+
+    >>> h5f = HiisiHDF('data.h5')
+    >>> h5f.search('elangle', 0.5, tolerance=0.1)
+    [u'/dataset1/where']
+    >>>
 
 Installation
 ------------
