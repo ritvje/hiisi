@@ -5,15 +5,10 @@ fluent as possible. Module contains higher level tools such as search and
 write methods that are build on top of h5py_ module.
 
 HiisiHDF expands h5py.File class and it forms the base of the module.
-HiisiHDF makes it possible to search metadata from the file
-without any prior knowledge of the structure of the file. In addition, it contains
-methods for listing the datasets and groups of the file and a conveinient method
+Using HiisiHDF file handle, users can search metadata from the file
+without any prior knowledge of the file structure. In addition, HiisiHDF contains
+methods for listing the datasets and groups of the file and a convenient method
 for creating new hdf5 files and for expanding files that already contain data.
-
-File creation method uses nested dictionaries, referred to as filedicts, for saving
-the hdf5-file structure. The keys of the outer layer of the filedict are the group
-and dataset paths. The value of each path is a dictionary containing the related
-metadata. If the path contains a dataset, a key 'DATASET' is used to indicate the data array.
  
 HiisiHDF can be used as such or it can be used as base class for creating more
 specialized file handles for different types of data files. An example of custom
@@ -72,12 +67,12 @@ Installation
 Hiisi is dependent on **numpy** and **h5py** packages. If you have these dependencies already 
 installed you can simply run ``pip install hiisi``.
 
-Installing the dependencies and the package
-``install pip``
-``pip install numpy``
-``pip install Cython``
-``pip install h5py``
-``pip install hiisi``
+Installing the dependencies and the package::
+    install pip
+    pip install numpy
+    pip install Cython
+    pip install h5py
+    pip install hiisi
 
 License
 -------
