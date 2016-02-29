@@ -22,12 +22,16 @@ weather radar data files that follow the OPERA odim data format.
 
 Examples
 --------
+Open hdf5 file::
+
+    >>> from hiisi import HiisiHDF
+    >>> h5f = HiisiHDF('data.h5')
+
 Get a list of datasets::
 
-    >>> h5f = HiisiHDF('data.h5')
     >>> print(h5f.list_datasets())
     ['/dataset1/data1/data', '/dataset1/data2/data', ...]
-    >>>
+
 
 Retrieve all instances of certain attribute::
 
@@ -37,39 +41,43 @@ Retrieve all instances of certain attribute::
     '/dataset1/where'
     >>> print(pair.value)
     0.5
-    >>>
 
-Create new hdf5 file with content::
+Create a new hdf5 file with content::
 
     >>> h5f = HiisiHDF('newfile.h5', 'w')
     >>> filedict = {'/':{'attr1':'A'},
                     '/dataset1/data1/data':{'DATASET':np.zeros(100), 'quantity':'emptyarray'}, 'B':'b'}
     >>> h5f.create_from_filedict(filedict)
-    >>>
 
-Find the name of the groups that contains an attribute with a certain value::
+Find the names of the groups that contain an attribute with a certain value::
 
-    >>> h5f = HiisiHDF('data.h5')
     >>> h5f.search('quantity', 'DBZH')
     [u'/dataset1/data2/what',
      u'/dataset2/data2/what',
      u'/dataset3/data2/what',
      u'/dataset4/data2/what',
      u'/dataset5/data2/what']
-    >>>
 
-Find the name of the groups that contain a numerical attribute with a certain value::
+Find the names of the groups that contain a numerical attribute
+with a certain value or a value that is within the given tolerance::
 
-    >>> h5f = HiisiHDF('data.h5')
     >>> h5f.search('elangle', 0.5, tolerance=0.1)
     [u'/dataset1/where']
-    >>>
+
 
 Installation
 ------------
-install pip
-pip install numpy
-pip install Cython
-pip install h5py
-pip install hiisi
+Hiisi is dependent on numpy and h5py packages. If you have these dependencies already 
+installed you can simply run ''pip install hiisi''.
+
+Installing the dependencies and the package
+''install pip''
+''pip install numpy''
+''pip install Cython''
+''pip install h5py''
+''pip install hiisi''
+
+License
+-------
+This code is licensed under the MIT open source license.
 
