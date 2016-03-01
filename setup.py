@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-import os.path
+import os
+import re
+import io
 
 try:
     from setuptools import setup, find_packages
 except ImportError:
     from distutils.core import setup, find_packages
-
-import sys
 
 try:
     import numpy
@@ -17,11 +17,24 @@ try:
 except ImportError:
     print "Package requirements not fullfilled! h5py is missing"
 
-#with open(os.path.join('hiisi','VERSION')) as version_file:
-#    version = version_file.read().strip()
+# This function is copied from https://github.com/pypa/pip/blob/1.5.6/setup.py#L33
+def read(*names, **kwargs):
+    with io.open(
+        os.path.join(os.path.dirname(__file__), *names),
+        encoding=kwargs.get("encoding", "utf8")
+    ) as fp:
+        return fp.read()
+# This function is copied from https://github.com/pypa/pip/blob/1.5.6/setup.py#L33
+def find_version(*file_paths):
+    version_file = read(*file_paths)
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
+                              version_file, re.M)
+    if version_match:
+        return version_match.group(1)
+    raise RuntimeError("Unable to find version string.")
 
 setup(name='hiisi',
-      version='0.0.4',
+      version=find_version("hiisi", "__init__.py"),
       description='Tools for easy handling of hdf5 files',
       author='Joonas Karjalainen',
       author_email='joonas.karjalainen@fmi.fi',
