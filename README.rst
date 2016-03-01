@@ -26,9 +26,12 @@ Open hdf5 file::
 
 Get a list of datasets::
 
-    >>> print(h5f.list_datasets())
-    ['/dataset1/data1/data', '/dataset1/data2/data', ...]
-
+    >>> for dataset in h5f.datasets():
+            print(dataset)
+    '/dataset1/data1/data'
+    '/dataset1/data2/data'
+    '/dataset2/data1/data'
+    '/dataset2/data2/data'
 
 Retrieve all instances of certain attribute::
 

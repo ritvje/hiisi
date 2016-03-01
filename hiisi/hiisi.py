@@ -66,34 +66,38 @@ class HiisiHDF(h5py.File):
         else:
             return False
 
-    def list_datasets(self):
+    def datasets(self):
         """Method returns a list of all dataset paths.
 
         Examples
         --------
-
-        >>> h5f = HiisiHDF('data.h5')
-        >>> print(h5f.list_datasets())
-        ['/dataset1/data1/data', '/dataset1/data2/data', ...]
-
+        >>> for dataset in h5f.datasets():
+                print(dataset)
+        '/dataset1/data1/data'
+        '/dataset1/data2/data'
+        '/dataset2/data1/data'
+        '/dataset2/data2/data'
         """
         HiisiHDF._clear_cache()
         self.visititems(HiisiHDF._is_dataset)
-        return HiisiHDF.CACHE['dataset_paths']
+        return iter(HiisiHDF.CACHE['dataset_paths'])
 
-    def list_groups(self):
+    def groups(self):
         """Method returns a list of all goup paths
         
         Examples
-        --------
-        >>> h5f = HiisiHDF('data.h5')
-        >>> print(h5f.list_groups())
-        >>> ['/', '/dataset1', '/dataset1/data1', '/dataset1/data2']
+        --------        
+        >>> for group in h5f.groups():
+                print(group)        
+        '/'
+        '/dataset1'
+        '/dataset1/data1'
+        '/dataset1/data2'
         """
         HiisiHDF._clear_cache()
         self.CACHE['group_paths'].append('/') #Every hdf5 file has a root
         self.visititems(HiisiHDF._is_group)
-        return HiisiHDF.CACHE['group_paths']
+        return iter(HiisiHDF.CACHE['group_paths'])
 
 
     def attr_gen(self, attr):

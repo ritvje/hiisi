@@ -69,20 +69,20 @@ class Test(unittest.TestCase):
     def test_attr_exists_false(self):
         self.assertFalse(self.h5file.attr_exists('not_existing_attr'))    
 
-    def test_list_datasets(self):
-        self.assertItemsEqual(self.h5file.list_datasets(), self.dataset_paths)
+    def test_datasets(self):
+        self.assertItemsEqual(list(self.h5file.datasets()), self.dataset_paths)
         
-    def test_list_datasets_no_datasets_found(self):
+    def test_datasets_no_datasets_found(self):
         with hiisi.HiisiHDF('tmp.h5', 'w') as h5f:
-            self.assertItemsEqual(h5f.list_datasets(), [])
+            self.assertItemsEqual(list(h5f.datasets()), [])
         os.remove('tmp.h5')
         
-    def test_list_groups(self):
-        self.assertItemsEqual(self.h5file.list_groups(), self.group_paths)
+    def test_groups(self):
+        self.assertItemsEqual(list(self.h5file.groups()), self.group_paths)
         
-    def test_list_groups_no_groups_found(self):
+    def test_groups_no_groups_found(self):
         with hiisi.HiisiHDF('tmp.h5', 'w') as h5f:
-            self.assertItemsEqual(h5f.list_groups(), ['/'])
+            self.assertItemsEqual(h5f.groups(), ['/'])
         os.remove('tmp.h5')
 
     def test_attr_gen(self):
