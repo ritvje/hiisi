@@ -67,7 +67,7 @@ class HiisiHDF(h5py.File):
             return False
 
     def datasets(self):
-        """Method returns a list of all dataset paths.
+        """Method returns an iterator over all dataset paths.
 
         Examples
         --------
@@ -83,7 +83,7 @@ class HiisiHDF(h5py.File):
         return iter(HiisiHDF.CACHE['dataset_paths'])
 
     def groups(self):
-        """Method returns a list of all goup paths
+        """Method returns an iterator over all goup paths
         
         Examples
         --------        
@@ -103,11 +103,22 @@ class HiisiHDF(h5py.File):
     def attr_gen(self, attr):
         """Returns attribute generator that yields namedtuples containing
         path value pairs
+        
+        Parameters
+        ----------
+        attr : str
+            Name of the search attribute
+
+        Returns
+        -------
+        attr_generator : generator
+            Returns a generator that yields named tuples with field names
+            path and value.
 
         Examples
         --------
         >>> gen = h5f.attr_gen('elangle')
-        >>> pair = gen.next()
+        >>> pair = next(gen)
         >>> print(pair.path)
         '/dataset1/where'
         >>> print(pair.value)
@@ -190,24 +201,24 @@ class HiisiHDF(h5py.File):
 
         Returns
         -------
-        list_of_paths : list of strings
-            List of hdf5 paths
+        result_iter : iterator
+            An iterator over matching paths
 
         Examples
         --------
 
-        >>> h5f = HiisiHDF('data.h5')
-        >>> h5f.search('elangle', 0.5, 0.1)
-        [u'/dataset1/where']
+        >>> for result in h5f.search('elangle', 0.5, 0.1):
+                print(result)        
+        '/dataset1/where'
 
-        >>> h5f = HiisiHDF('data.h5')
-        >>> h5f.search('quantity', 'DBZH')
-        [u'/dataset1/data2/what',
-         u'/dataset2/data2/what',
-         u'/dataset3/data2/what',
-         u'/dataset4/data2/what',
-         u'/dataset5/data2/what']
-
+        >>> for result in h5f.search('quantity', 'DBZH'):
+                print(result)
+        '/dataset1/data2/what'
+        '/dataset2/data2/what'
+        '/dataset3/data2/what'
+        '/dataset4/data2/what'
+        '/dataset5/data2/what'
+        
         """
         found_paths = []
         gen = self.attr_gen(attr)
@@ -225,5 +236,5 @@ class HiisiHDF(h5py.File):
                 if path_attr_pair.value == value:
                     found_paths.append(path_attr_pair.path)
 
-        return found_paths
+        return iter(found_paths)
 

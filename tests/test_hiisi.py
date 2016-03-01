@@ -165,10 +165,10 @@ class Test(unittest.TestCase):
         os.remove(filename)
            
     def test_search_no_match(self):
-        self.assertListEqual([], self.h5file.search('madeupkey', 'xyz'))
+        self.assertListEqual([], list(self.h5file.search('madeupkey', 'xyz')))
             
     def test_search_single_match(self):
-        self.assertListEqual([self.unique_attr_path], self.h5file.search('unique_attr', self.unique_attr_value))
+        self.assertListEqual([self.unique_attr_path], list(self.h5file.search('unique_attr', self.unique_attr_value)))
             
     def test_search_multiple_matches(self):
         filename = 'test_search_multiple_matches.h5'
@@ -179,7 +179,7 @@ class Test(unittest.TestCase):
                 group.attrs['attribute']  = 'attribute'
             
         with hiisi.HiisiHDF(filename) as h5f:
-            self.assertListEqual(sorted(groups), sorted(h5f.search('attribute', 'attribute')))
+            self.assertListEqual(sorted(groups), sorted(list(h5f.search('attribute', 'attribute'))))
         os.remove(filename)
             
     def test_search_numerical_attribute_within_tolerance(self):
@@ -193,7 +193,7 @@ class Test(unittest.TestCase):
             group.attrs['attribute']  = 0.5245
 
         with hiisi.HiisiHDF(filename) as h5f:        
-            self.assertListEqual(['/basegroup/group1'], h5f.search('attribute', 0.5, 0.1))
+            self.assertListEqual(['/basegroup/group1'], list(h5f.search('attribute', 0.5, 0.1)))
         os.remove(filename)
 
     def test_search_numerical_attribute_outside_tolerance(self):            
@@ -207,7 +207,7 @@ class Test(unittest.TestCase):
             group.attrs['attribute']  = 0.5245
 
         with hiisi.HiisiHDF(filename) as h5f:        
-            self.assertListEqual([], h5f.search('attribute', 7, 0.1))
+            self.assertListEqual([], list(h5f.search('attribute', 7, 0.1)))
         os.remove(filename)
         
     

@@ -1,4 +1,4 @@
-Installation
+Install
 ============
 Hiisi is dependent on **numpy** and **h5py** packages. If you have these dependencies already 
 installed you can simply run ``pip install hiisi``.
