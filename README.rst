@@ -51,13 +51,18 @@ Create a new hdf5 file with content::
 
 Find the names of the groups that contain an attribute with a certain value::
 
-    >>> h5f.search('quantity', 'DBZH')
-    [u'/dataset1/data2/what',
-     u'/dataset2/data2/what',
-     u'/dataset3/data2/what',
-     u'/dataset4/data2/what',
-     u'/dataset5/data2/what']
+    >>> for result in h5f.search('elangle', 0.5, 0.1):
+            print(result)        
+    '/dataset1/where'
 
+    >>> for result in h5f.search('quantity', 'DBZH'):
+            print(result)
+    '/dataset1/data2/what'
+    '/dataset2/data2/what'
+    '/dataset3/data2/what'
+    '/dataset4/data2/what'
+    '/dataset5/data2/what'
+        
 Find the names of the groups that contain a numerical attribute
 with a certain value or a value that is within the given tolerance::
 
