@@ -33,7 +33,7 @@ Get a list of datasets::
     '/dataset2/data1/data'
     '/dataset2/data2/data'
 
-Retrieve all instances of certain attribute::
+Retrieve all instances of an attribute::
 
     >>> gen = h5f.attr_gen('elangle')
     >>> pair = gen.next()
@@ -50,10 +50,6 @@ Create a new hdf5 file with content::
     >>> h5f.create_from_filedict(filedict)
 
 Find the names of the groups that contain an attribute with a certain value::
-
-    >>> for result in h5f.search('elangle', 0.5, 0.1):
-            print(result)        
-    '/dataset1/where'
 
     >>> for result in h5f.search('quantity', 'DBZH'):
             print(result)

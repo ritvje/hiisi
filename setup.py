@@ -7,7 +7,7 @@ try:
     from setuptools import setup, find_packages
 except ImportError:
     from distutils.core import setup, find_packages
-
+'''
 try:
     import numpy
 except ImportError:
@@ -16,6 +16,7 @@ try:
     import h5py
 except ImportError:
     print "Package requirements not fullfilled! h5py is missing"
+'''
 
 # This function is copied from https://github.com/pypa/pip/blob/1.5.6/setup.py#L33
 def read(*names, **kwargs):
@@ -47,7 +48,7 @@ setup(name='hiisi',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 2.7'
         ],
-      keywords='hdf5 hdf hiisi',
+      keywords='hdf5 hdf hiisi weather radar odim',
       packages=find_packages(exclude=['docs','tests*']),
-      install_requires=['numpy','Cython','h5py'],
+      #install_requires=['numpy','Cython','h5py'],
     )
