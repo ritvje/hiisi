@@ -22,7 +22,7 @@ Examples
 Open hdf5 file::
 
     >>> from hiisi import HiisiHDF
-    >>> h5f = HiisiHDF('data.h5')
+    >>> h5f = HiisiHDF('data.h5', 'r')
 
 Get a list of datasets::
 
