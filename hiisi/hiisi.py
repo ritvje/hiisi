@@ -67,7 +67,7 @@ class HiisiHDF(h5py.File):
             return False
 
     def datasets(self):
-        """Method returns an iterator over all dataset paths.
+        """Method returns a list of dataset paths.
 
         Examples
         --------
@@ -80,10 +80,10 @@ class HiisiHDF(h5py.File):
         """
         HiisiHDF._clear_cache()
         self.visititems(HiisiHDF._is_dataset)
-        return iter(HiisiHDF.CACHE['dataset_paths'])
+        return HiisiHDF.CACHE['dataset_paths']
 
     def groups(self):
-        """Method returns an iterator over all goup paths
+        """Method returns a list of all goup paths
         
         Examples
         --------        
@@ -95,10 +95,9 @@ class HiisiHDF(h5py.File):
         '/dataset1/data2'
         """
         HiisiHDF._clear_cache()
-        self.CACHE['group_paths'].append('/') #Every hdf5 file has a root
+        self.CACHE['group_paths'].append('/')
         self.visititems(HiisiHDF._is_group)
-        return iter(HiisiHDF.CACHE['group_paths'])
-
+        return HiisiHDF.CACHE['group_paths']
 
     def attr_gen(self, attr):
         """Returns attribute generator that yields namedtuples containing
@@ -201,8 +200,8 @@ class HiisiHDF(h5py.File):
 
         Returns
         -------
-        result_iter : iterator
-            An iterator over matching paths
+        results : list
+            a list of all matching paths
 
         Examples
         --------
@@ -236,5 +235,5 @@ class HiisiHDF(h5py.File):
                 if path_attr_pair.value == value:
                     found_paths.append(path_attr_pair.path)
 
-        return iter(found_paths)
+        return found_paths
 

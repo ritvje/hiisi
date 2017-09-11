@@ -93,16 +93,14 @@ class OdimPVOL(HiisiHDF):
         try:
             search_results = self.search('elangle', self.elangles[elangle])
         except KeyError:
+            return None
+
+        if search_results == []:
             print('Elevation angle {} is not found from file'.format(elangle))
             print('File contains elevation angles:{}'.format(self.elangles))
-            return None
-            
-        try:
-            elangle_path = next(search_results)
-            pass
-        except StopIteration:
-            return None
-            
+        else:
+            elangle_path = search_results[0]
+                    
         if elangle_path is not None:
             dataset_root = re.search( '^/dataset[0-9]+/', elangle_path).group(0) 
             quantity_path = None
@@ -328,20 +326,26 @@ class OdimCOMP(HiisiHDF):
         [255 255 255 ..., 255 255 255]
         [255 255 255 ..., 255 255 255]]
         """
-        quantity_path = None
+        # NEW
         search_results = self.search('quantity', quantity)
         try:
-            quantity_path = next(search_results)
-        except StopIteration:
-            #raise KeyError("Attribute 'quantity' was not found from the file")
+            quantity_path = search_results[0]
+        except IndexError:
+            print('Attribute quantity=\'{}\' was not found from file'.format(quantity))
             return None
-        
-        if quantity_path is not None:
-            dataset_path = re.search( '^/dataset[0-9]+/data[0-9]+/', quantity_path).group(0)
-            dataset_path = os.path.join(dataset_path, 'data')   
-            if isinstance(self[dataset_path], h5py.Dataset):
-                self.dataset = self[dataset_path].ref
-                return dataset_path        
+
+        dataset_root_path = re.search( '^/dataset[0-9]+/', quantity_path).group(0)
+        dataset_paths = self.datasets()
+        for ds_path in dataset_paths:
+            try:
+                full_dataset_path = re.search( '^{}data[0-9]+/data'.format(dataset_root_path), ds_path).group(0)
+                break
+            except:
+                pass
+        if isinstance(self[full_dataset_path], h5py.Dataset):
+            self.dataset = self[full_dataset_path].ref
+            return full_dataset_path        
+            
                      
 '''                     
 class OdimVPR(HiisiHDF):
