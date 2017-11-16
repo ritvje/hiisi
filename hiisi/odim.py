@@ -333,18 +333,26 @@ class OdimCOMP(HiisiHDF):
         except IndexError:
             print('Attribute quantity=\'{}\' was not found from file'.format(quantity))
             return None
-
-        dataset_root_path = re.search( '^/dataset[0-9]+/', quantity_path).group(0)
-        dataset_paths = self.datasets()
-        for ds_path in dataset_paths:
-            try:
-                full_dataset_path = re.search( '^{}data[0-9]+/data'.format(dataset_root_path), ds_path).group(0)
-                break
-            except:
-                pass
-        if isinstance(self[full_dataset_path], h5py.Dataset):
+        
+        # Fix for dataset selection issue done 16.11.2017
+        # TODO: Figure out what is the best way to implement
+        # different versions of hdf5 structure
+        if isinstance(self[quantity_path.replace('/what', '/data')], h5py.Dataset):
             self.dataset = self[full_dataset_path].ref
-            return full_dataset_path        
+            return full_dataset_path
+        else:
+            # Old dataset selection method with a bug
+            dataset_root_path = re.search( '^/dataset[0-9]+/', quantity_path).group(0)
+            dataset_paths = self.datasets()
+            for ds_path in dataset_paths:
+                try:
+                    full_dataset_path = re.search( '^{}data[0-9]+/data'.format(dataset_root_path), ds_path).group(0)
+                    break
+                except:
+                    pass
+            if isinstance(self[full_dataset_path], h5py.Dataset):
+                self.dataset = self[full_dataset_path].ref
+                return full_dataset_path        
             
                      
 '''                     
