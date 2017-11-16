@@ -337,7 +337,8 @@ class OdimCOMP(HiisiHDF):
         # Fix for dataset selection issue done 16.11.2017
         # TODO: Figure out what is the best way to implement
         # different versions of hdf5 structure
-        if isinstance(self[quantity_path.replace('/what', '/data')], h5py.Dataset):
+        full_dataset_path = quantity_path.replace('/what', '/data')
+        if isinstance(self[full_dataset_path], h5py.Dataset):
             self.dataset = self[full_dataset_path].ref
             return full_dataset_path
         else:
