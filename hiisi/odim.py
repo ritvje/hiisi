@@ -326,23 +326,29 @@ class OdimCOMP(HiisiHDF):
         [255 255 255 ..., 255 255 255]
         [255 255 255 ..., 255 255 255]]
         """
-        # NEW
+        
+        # Files with a following dataset structure.
+        # Location of 'quantity' attribute: /dataset1/data1/what
+        # Dataset path structure: /dataset1/data1/data
         search_results = self.search('quantity', quantity)
         try:
             quantity_path = search_results[0]
         except IndexError:
             print('Attribute quantity=\'{}\' was not found from file'.format(quantity))
             return None
-        
-        # Fix for dataset selection issue done 16.11.2017
-        # TODO: Figure out what is the best way to implement
-        # different versions of hdf5 structure
         full_dataset_path = quantity_path.replace('/what', '/data')
-        if isinstance(self[full_dataset_path], h5py.Dataset):
-            self.dataset = self[full_dataset_path].ref
-            return full_dataset_path
-        else:
-            # Old dataset selection method with a bug
+
+        try:
+            if isinstance(self[full_dataset_path], h5py.Dataset):
+                self.dataset = self[full_dataset_path].ref
+                return full_dataset_path
+            else:
+                self.dataset = None
+                return None
+        except KeyError:
+            # Files with following dataset structure
+            # Location of 'quantity' attribute: /dataset1/what
+            # Dataset path structure: /dataset1/data1/data 
             dataset_root_path = re.search( '^/dataset[0-9]+/', quantity_path).group(0)
             dataset_paths = self.datasets()
             for ds_path in dataset_paths:
@@ -354,7 +360,9 @@ class OdimCOMP(HiisiHDF):
             if isinstance(self[full_dataset_path], h5py.Dataset):
                 self.dataset = self[full_dataset_path].ref
                 return full_dataset_path        
-            
+            else:
+                self.dataset = None
+                return None
                      
 '''                     
 class OdimVPR(HiisiHDF):
