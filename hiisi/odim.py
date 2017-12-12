@@ -37,7 +37,10 @@ class OdimPVOL(HiisiHDF):
 
     @property
     def dataset(self):        
-        return self[self._dataset][:]
+        if self._dataset is None:
+            return None
+        else:
+            return self[self._dataset][:]
 
     @dataset.setter
     def dataset(self, value):
@@ -291,7 +294,10 @@ class OdimCOMP(HiisiHDF):
         
     @property
     def dataset(self):        
-        return self[self._dataset][:]
+        if self._dataset is None:
+            return None
+        else:
+            return self[self._dataset][:]
 
     @dataset.setter
     def dataset(self, value):
@@ -335,6 +341,7 @@ class OdimCOMP(HiisiHDF):
             quantity_path = search_results[0]
         except IndexError:
             print('Attribute quantity=\'{}\' was not found from file'.format(quantity))
+            self.dataset = None
             return None
         full_dataset_path = quantity_path.replace('/what', '/data')
 
