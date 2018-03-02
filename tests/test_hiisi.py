@@ -102,7 +102,8 @@ class Test(unittest.TestCase):
         with hiisi.HiisiHDF(filename, 'w') as h5f:
             file_dict = {}
             file_dict['/'] = {'A':1, 'B':2}
-            file_dict['/dataset1/data1/data'] = {'DATASET':np.arange(9).reshape((3,3)), 'C':'c'}
+            file_dict['/dataset1/data1/data'] = {'DATASET':np.arange(1000*1000).reshape((1000,1000)), 'C':'c'}
+            #file_dict['/dataset1/data1/data'] = {'DATASET':np.arange(9).reshape((3,3)), 'C':'c'}
             file_dict['/dataset1/data1/what'] = {'D':123}
             h5f.create_from_filedict(file_dict)        
 
@@ -110,10 +111,29 @@ class Test(unittest.TestCase):
             self.assertEqual(h5f['/'].attrs['A'], 1)
             self.assertEqual(h5f['/'].attrs['B'], 2)
             self.assertEqual(h5f['/dataset1/data1/data'].attrs['C'], 'c')
-            np.testing.assert_array_equal(h5f['/dataset1/data1/data'][:], np.arange(9).reshape((3,3)))
+            np.testing.assert_array_equal(h5f['/dataset1/data1/data'][:], np.arange(1000*1000).reshape((1000,1000)))
+            #np.testing.assert_array_equal(h5f['/dataset1/data1/data'][:], np.arange(9).reshape((3,3)))
             self.assertEqual(h5f['/dataset1/data1/what'].attrs['D'], 123)
-        os.remove(filename)
+        #os.remove(filename)
 
+    def test_create_from_filedict_new_file_with_compression(self):
+        filename = 'create_from_filedict_test.h5.gz'
+        with hiisi.HiisiHDF(filename, 'w') as h5f:
+            file_dict = {}
+            file_dict['/'] = {'A':1, 'B':2}
+            file_dict['/dataset1/data1/data'] = {'DATASET':np.arange(1000*1000).reshape((1000,1000)), 'COMPRESSION':"gzip", 'COMPRESSION_OPTS':9, 'C':'c'}
+            file_dict['/dataset1/data2/data'] = {'DATASET':np.arange(9).reshape((3,3)), 'COMPRESSION':"gzip", 'C':'c'}
+            file_dict['/dataset1/data1/what'] = {'D':123}
+            h5f.create_from_filedict(file_dict)        
+
+        with hiisi.HiisiHDF(filename, 'r') as h5f:      
+            self.assertEqual(h5f['/'].attrs['A'], 1)
+            self.assertEqual(h5f['/'].attrs['B'], 2)
+            self.assertEqual(h5f['/dataset1/data1/data'].attrs['C'], 'c')
+            np.testing.assert_array_equal(h5f['/dataset1/data1/data'][:], np.arange(1000*1000).reshape((1000,1000)))
+            np.testing.assert_array_equal(h5f['/dataset1/data2/data'][:], np.arange(9).reshape((3,3)))
+            self.assertEqual(h5f['/dataset1/data1/what'].attrs['D'], 123)
+        #os.remove(filename)
     
     def test_create_from_filedict_append_new_goup(self):
         filename = 'create_from_filedict_test.h5'

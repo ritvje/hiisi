@@ -154,13 +154,15 @@ class HiisiHDF(h5py.File):
         >>> h5f.create_from_filedict(filedict)
 
         """
+        RESERVED_KEYS = ['DATASET', 'COMPRESSION', 'COMPRESSION_OPTS']
+
         if self.mode in ['r+','w', 'w-', 'x', 'a']:
             for h5path, path_content in filedict.iteritems():
                 if path_content.has_key('DATASET'):
                     # If path exist, write only metadata
                     if h5path in self:
                         for key, value in path_content.iteritems():
-                            if key != 'DATASET':
+                            if key not in RESERVED_KEYS:
                                 self[h5path].attrs[key] = value
                     else:
                         try:
@@ -168,9 +170,21 @@ class HiisiHDF(h5py.File):
                         except ValueError:
                             group = self[os.path.dirname(h5path)]
                             pass # This pass has no effect?
-                        new_dataset = group.create_dataset(os.path.basename(h5path), data=path_content['DATASET'])
+
+                        # extract compression parameters
+                        compression = path_content.get('COMPRESSION')
+                        if compression is not None:
+                            compression_opts = path_content.get('COMPRESSION_OPTS')
+                        
+                        if compression is not None:
+                            if compression_opts is not None:
+                                new_dataset = group.create_dataset(os.path.basename(h5path), data=path_content['DATASET'], compression=compression, compression_opts=compression_opts)
+                            else:
+                                new_dataset = group.create_dataset(os.path.basename(h5path), data=path_content['DATASET'], compression=compression)
+                        else:
+                            new_dataset = group.create_dataset(os.path.basename(h5path), data=path_content['DATASET'])
                         for key, value in path_content.iteritems():
-                            if key != 'DATASET':
+                            if key not in RESERVED_KEYS:
                                 new_dataset.attrs[key] = value
                 else:
                     try:  
