@@ -46,5 +46,12 @@ class Test(unittest.TestCase):
         comp.select_dataset('RATE')
         self.assertIsNone(comp.select_dataset('NONEXISTING'))
 
+    def test_get_metadata_of_selected_dataset(self):
+        comp = self.getOperaComposite()
+        comp.select_dataset('RATE')
+        self.assertEqual(comp.metadata['quantity'], 'RATE')
+        comp.select_dataset('QIND')
+        self.assertEqual(comp.metadata['quantity'], 'QIND')
+
 if __name__=='__main__':
     unittest.main()

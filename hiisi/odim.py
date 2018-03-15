@@ -45,12 +45,16 @@ class OdimPVOL(HiisiHDF):
 
     @dataset.setter
     def dataset(self, dataset_path):
-        if isinstance(self[dataset_path], h5py.Dataset):
-            self.selected_dataset_path = dataset_path
-            self._metadata = None
-        else:
+        try:
+            if isinstance(self[dataset_path], h5py.Dataset):
+                self.selected_dataset_path = dataset_path
+            else:
+                self.selected_dataset_path = None
+        except TypeError as e:
+            print('{}'.format(e))
             self.selected_dataset_path = None
-        
+        self._metadata = None
+
     @property
     def metadata(self):
         if self._metadata is not None:
@@ -63,7 +67,6 @@ class OdimPVOL(HiisiHDF):
     def metadata(self, metadata_dict):
         self._metadata = metadata_dict
         
-
     def _set_elangles(self):
         """Sets the values of instance variable elangles.
         
@@ -144,7 +147,6 @@ class OdimPVOL(HiisiHDF):
                 
                 return self.selected_dataset_path
     
-    #TODO
     def selected_dataset_metadata(self):
         """Retrieves metadata related to the selected dataset.
 
@@ -171,7 +173,7 @@ class OdimPVOL(HiisiHDF):
                     metadata.update(dict(sub_group_obj.attrs))
                 except:
                     pass
-            # Exit loop when root group as been reached and 
+
             if group_obj.name == '/':
                 break
             group_obj = group_obj.parent
@@ -346,22 +348,41 @@ class OdimCOMP(HiisiHDF):
     Container class for odim composite files
     """
     def __init__(self, *args, **kwargs):
-        super(OdimCOMP, self).__init__(*args, **kwargs)            
-        #if len(self.search('object', 'COMP')) == 0:
-        #    raise ValueError('Given data file is not ODIM composite')
-        self._dataset = None
-        
+        super(OdimCOMP, self).__init__(*args, **kwargs)
+        self.selected_dataset_path = None
+        self._metadata = None
+
     @property
     def dataset(self):        
-        if self._dataset is None:
+        if self.selected_dataset_path is None:
             return None
         else:
-            return self[self._dataset][:]
+            return self[self.selected_dataset_path][:]
 
     @dataset.setter
-    def dataset(self, value):
-        self._dataset = value
-    
+    def dataset(self, dataset_path):
+        try:
+            if isinstance(self[dataset_path], h5py.Dataset):
+                self.selected_dataset_path = dataset_path
+            else:
+                self.selected_dataset_path = None
+        except TypeError as e:
+            print('{}'.format(e))
+            self.selected_dataset_path = None
+        self._metadata = None
+
+    @property
+    def metadata(self):
+        if self._metadata is not None:
+            return self._metadata
+        else:
+            self.metadata = self.selected_dataset_metadata()
+            return self._metadata
+
+    @metadata.setter
+    def metadata(self, metadata_dict):
+        self._metadata = metadata_dict    
+
     def select_dataset(self, quantity):
         """
         Selects the matching dataset and returns its path.
@@ -405,12 +426,8 @@ class OdimCOMP(HiisiHDF):
         full_dataset_path = quantity_path.replace('/what', '/data')
 
         try:
-            if isinstance(self[full_dataset_path], h5py.Dataset):
-                self.dataset = self[full_dataset_path].ref
-                return full_dataset_path
-            else:
-                self.dataset = None
-                return None
+            self.dataset = full_dataset_path
+            return self.selected_dataset_path
         except KeyError:
             # Files with following dataset structure
             # Location of 'quantity' attribute: /dataset1/what
@@ -423,13 +440,42 @@ class OdimCOMP(HiisiHDF):
                     break
                 except:
                     pass
-            if isinstance(self[full_dataset_path], h5py.Dataset):
-                self.dataset = self[full_dataset_path].ref
-                return full_dataset_path        
-            else:
-                self.dataset = None
-                return None
-                     
+            self.dataset = full_dataset_path
+            return self.selected_dataset_path
+            
+    def selected_dataset_metadata(self):
+        """Retrieves metadata related to the selected dataset.
+        
+        Search algorithm starts from the dataset and propagates towards the root.
+        All the how, what, where groups are examined at each level and the metadata is 
+        added to same the metadata dict. The metadata specific to other datasets is not
+        included.
+        """
+        if self.selected_dataset_path is None:
+            print('No dataset selected')
+            return None
+        
+        specific_sub_groups = ['how', 'what', 'where']
+        metadata = {}
+        # Dataset level
+        dataset_obj = self[self.selected_dataset_path]
+        metadata.update(dict(dataset_obj.attrs))
+        group_obj = dataset_obj.parent
+        while True:
+            metadata.update(dict(group_obj.attrs))
+            for sub_group in specific_sub_groups:
+                try:
+                    sub_group_obj = self[os.path.join(group_obj.name, sub_group)]
+                    metadata.update(dict(sub_group_obj.attrs))
+                except:
+                    pass
+
+            if group_obj.name == '/':
+                break
+            group_obj = group_obj.parent
+
+        return metadata
+
 '''                     
 class OdimVPR(HiisiHDF):
     """
