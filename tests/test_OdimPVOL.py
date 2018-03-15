@@ -37,6 +37,13 @@ class Test(unittest.TestCase):
         self.assertIsNone(self.odim_file.select_dataset('X', 'DBZH'))
         self.assertIsNone(self.odim_file.select_dataset('A', 'XXXX'))
  
+    def test_get_metadata_of_selected_dataset(self):
+        self.odim_file.select_dataset('A', 'DBZH')
+        self.assertEqual(self.odim_file.metadata['quantity'], 'DBZH')
+        self.odim_file.select_dataset('A', 'VRAD')
+        self.assertEqual(self.odim_file.metadata['quantity'], 'VRAD')
+
+
     def test_sector_valid_indexes(self):
         filedict = {'/dataset1/data1/data':{'DATASET':np.arange(10*10).reshape((10,10))},
                     '/dataset1/where':{'elangle':0.5, 'rscale':500},

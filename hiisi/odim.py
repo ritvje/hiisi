@@ -32,20 +32,38 @@ class OdimPVOL(HiisiHDF):
         #    raise Warning('The type of hdf5 file is not PVOL')
         self.elangles = {}
         self.quantities = []
-        self.dataset = None
+        self.selected_dataset_path = None
+        self._metadata = None
         self._set_elangles()
 
     @property
     def dataset(self):        
-        if self._dataset is None:
+        if self.selected_dataset_path is None:
             return None
         else:
-            return self[self._dataset][:]
+            return self[self.selected_dataset_path][:]
 
     @dataset.setter
-    def dataset(self, value):
-        self._dataset = value
+    def dataset(self, dataset_path):
+        if isinstance(self[dataset_path], h5py.Dataset):
+            self.selected_dataset_path = dataset_path
+            self._metadata = None
+        else:
+            self.selected_dataset_path = None
         
+    @property
+    def metadata(self):
+        if self._metadata is not None:
+            return self._metadata
+        else:
+            self.metadata = self.selected_dataset_metadata()
+            return self._metadata
+
+    @metadata.setter
+    def metadata(self, metadata_dict):
+        self._metadata = metadata_dict
+        
+
     def _set_elangles(self):
         """Sets the values of instance variable elangles.
         
@@ -76,7 +94,12 @@ class OdimPVOL(HiisiHDF):
             Upper case ascii letter defining the elevation angle
         quantity : str
             Name of the quantity e.g. DBZH, VRAD, RHOHV...
-            
+        set_metadata : bool
+            If set to True, the dataset specific metadata dict
+            is constructed and it can be accessed via property
+            'metadata'
+         
+
         Returns
         -------
         dataset : str
@@ -117,9 +140,45 @@ class OdimPVOL(HiisiHDF):
             if quantity_path is not None:
                 dataset_path = re.search('^/dataset[0-9]+/data[0-9]/', quantity_path).group(0)            
                 dataset_path = os.path.join(dataset_path, 'data')
-                if isinstance(self[dataset_path], h5py.Dataset):
-                    self.dataset = self[dataset_path].ref
-                    return dataset_path
+                self.dataset = dataset_path
+                
+                return self.selected_dataset_path
+    
+    #TODO
+    def selected_dataset_metadata(self):
+        """Retrieves metadata related to the selected dataset.
+
+        Search algorithm starts from the dataset and propagates towards the root.
+        All the how, what, where groups are examined at each level and the metadata is 
+        added to same the metadata dict. The metadata specific to other datasets is not
+        included.
+        """
+        if self.selected_dataset_path is None:
+            print('No dataset selected')
+            return None
+        
+        specific_sub_groups = ['how', 'what', 'where']
+        metadata = {}
+        # Dataset level
+        dataset_obj = self[self.selected_dataset_path]
+        metadata.update(dict(dataset_obj.attrs))
+        group_obj = dataset_obj.parent
+        while True:
+            metadata.update(dict(group_obj.attrs))
+            for sub_group in specific_sub_groups:
+                try:
+                    sub_group_obj = self[os.path.join(group_obj.name, sub_group)]
+                    metadata.update(dict(sub_group_obj.attrs))
+                except:
+                    pass
+            # Exit loop when root group as been reached and 
+            if group_obj.name == '/':
+                break
+            group_obj = group_obj.parent
+
+        return metadata
+
+            
 
     def sector(self, start_ray, end_ray, start_distance=None, end_distance=None, units='b'):
         """Slices a sector from the selected dataset.

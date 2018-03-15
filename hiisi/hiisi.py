@@ -140,9 +140,24 @@ class HiisiHDF(h5py.File):
         values are dictinaries containing the metadata and datasets. Metadata
         is given as normal key-value -pairs and dataset arrays are given using
         'DATASET' key. Datasets must be numpy arrays.
+
+        Datasets can be compressed by adding 'COMPRESSION' key to the
+        dictionary that contains the 'DATASET'. Level of compression can
+        be controlled with 'COMPRESSION_OPTS' key.
                 
         Method can also be used to append existing hdf5 file. If the file is
         opened in read only mode, method does nothing.
+
+        Parameters
+        ----------
+        file_dict : dict
+            Nested dictionary containing the hdf5 file structure.
+            Dictionary can contain reserved keys 'DATASET', 'COMPRESSION'
+            and 'COMPRESSION_OPTS' that specify how dataset is written
+            to the file.
+            COMPRESSION can have values 'gzip', 'lzf' and 'szip'.
+            COMPRESSION_OPTS can be optionally used with 'gzip' and it
+            can have values at range 0-9, the default value is 4.
 
         Examples
         --------
@@ -151,6 +166,12 @@ class HiisiHDF(h5py.File):
         >>> h5f = HiisiHDF('newfile.h5', 'w')
         >>> filedict = {'/':{'attr1':'A'},
                         '/dataset1/data1/data':{'DATASET':np.zeros(100), 'quantity':'emptyarray'}, 'B':'b'}
+        >>> h5f.create_from_filedict(filedict)
+
+        Create newfile.h5 with compressed datasets
+        >>> h5f = HiisiHDF('newfile.h5', 'w')
+        >>> filedict = {'/':{'attr1':'A'},
+                        '/dataset1/data1/data':{'DATASET':np.zeros(100), 'COMPRESSION':'gzip', 'COMPRESSION_OPTS':9, 'quantity':'emptyarray'}, 'B':'b'}
         >>> h5f.create_from_filedict(filedict)
 
         """
