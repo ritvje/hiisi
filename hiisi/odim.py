@@ -24,6 +24,34 @@ class MissingMetadataError(Exception):
 class OdimPVOL(HiisiHDF):
     """
     Container for odim polar volumes.
+
+    Class contains methods for easy access to ODIM pvol datasets
+    and the associated metadata.
+
+    Examples
+    --------
+    Get the hdf5 path of the DBZH dataset at lowest elevation angle
+        
+    >>> pvol = odimPVOL('pvol.h5')
+    >>> dataset = pvol.select_dataset('A', 'DBZH')
+    >>> print(dataset)
+    '/dataset1/data1/data'
+
+    Access the the selected dataset array
+    >>> pvol.dataset
+    array([[255,  68,   0, ...,   0,   0,   0],
+    [  0,  66, 255, ...,   0,   0,   0],
+    [  0,   0,   0, ...,   0,   0,   0],
+    ..., 
+    [  0,   0,   0, ...,   0,   0,   0],
+    [  0,   0,   0, ...,   0,   0,   0],
+    [255,  75,   0, ...,   0,   0,   0]], dtype=uint8)
+    
+    Access the metadata related to selected dataset
+    >>> pvol.metadata['gain']
+    0.5
+    >>> pvol.metadata['towerheight']
+    33.0
     
     """
     def __init__(self, *args, **kwargs):
@@ -60,7 +88,7 @@ class OdimPVOL(HiisiHDF):
         if self._metadata is not None:
             return self._metadata
         else:
-            self.metadata = self.selected_dataset_metadata()
+            self.metadata = self._create_selected_dataset_metadata()
             return self._metadata
 
     @metadata.setter
@@ -86,68 +114,8 @@ class OdimPVOL(HiisiHDF):
             self.elangles = dict(zip(list(string.ascii_uppercase[:n_elangles]), elevation_angles))
         except IndexError:
             self.elangles = {}
-        
-    def select_dataset(self, elangle, quantity):
-        """
-        Selects the matching dataset and returns its path.
-        
-        Parameters
-        ----------
-        elangle : str
-            Upper case ascii letter defining the elevation angle
-        quantity : str
-            Name of the quantity e.g. DBZH, VRAD, RHOHV...
-        set_metadata : bool
-            If set to True, the dataset specific metadata dict
-            is constructed and it can be accessed via property
-            'metadata'
-         
 
-        Returns
-        -------
-        dataset : str
-            Path of the matching dataset or None if no dataset is found.
-            
-        Examples
-        --------
-        Get the hdf5 path of the DBZH dataset at lowest elevation angle
-        
-        >>> pvol = odimPVOL('pvol.h5')
-        >>> dataset = pvol.select_dataset('A', 'DBZH')
-        >>> print(dataset)
-        '/dataset1/data1/data'
-
-        """
-        elangle_path = None
-        try:
-            search_results = self.search('elangle', self.elangles[elangle])
-        except KeyError:
-            return None
-
-        if search_results == []:
-            print('Elevation angle {} is not found from file'.format(elangle))
-            print('File contains elevation angles:{}'.format(self.elangles))
-        else:
-            elangle_path = search_results[0]
-                    
-        if elangle_path is not None:
-            dataset_root = re.search( '^/dataset[0-9]+/', elangle_path).group(0) 
-            quantity_path = None
-            search_results = self.search('quantity', quantity)
-
-            for path in search_results:
-                if dataset_root in path:
-                    quantity_path = path
-                    break
-                    
-            if quantity_path is not None:
-                dataset_path = re.search('^/dataset[0-9]+/data[0-9]/', quantity_path).group(0)            
-                dataset_path = os.path.join(dataset_path, 'data')
-                self.dataset = dataset_path
-                
-                return self.selected_dataset_path
-    
-    def selected_dataset_metadata(self):
+    def _create_selected_dataset_metadata(self):
         """Retrieves metadata related to the selected dataset.
 
         Search algorithm starts from the dataset and propagates towards the root.
@@ -179,9 +147,87 @@ class OdimPVOL(HiisiHDF):
             group_obj = group_obj.parent
 
         return metadata
+        
+    def select_dataset(self, elangle, quantity):
+        """
+        Selects the matching dataset and returns its path.
 
+        After dataset has been selected the data array can be
+        used via property 'dataset'. The metadata associated to
+        the selected dataset can be accessed through 'metadata'
+        property that works as python dictionary.
+        
+        Parameters
+        ----------
+        elangle : str
+            Upper case ascii letter defining the elevation angle
+        quantity : str
+            Name of the quantity e.g. DBZH, VRAD, RHOHV...
+        set_metadata : bool
+            If set to True, the dataset specific metadata dict
+            is constructed and it can be accessed via property
+            'metadata'
+         
+
+        Returns
+        -------
+        dataset : str
+            Path of the matching dataset or None if no dataset is found.
             
+        Examples
+        --------
+        Get the hdf5 path of the DBZH dataset at lowest elevation angle
+        
+        >>> pvol = odimPVOL('pvol.h5')
+        >>> dataset_path = pvol.select_dataset('A', 'DBZH')
+        >>> print(dataset_path)
+        '/dataset1/data1/data'
 
+        Access the the selected dataset array
+        >>> pvol.dataset
+        array([[255,  68,   0, ...,   0,   0,   0],
+        [  0,  66, 255, ...,   0,   0,   0],
+        [  0,   0,   0, ...,   0,   0,   0],
+        ..., 
+        [  0,   0,   0, ...,   0,   0,   0],
+        [  0,   0,   0, ...,   0,   0,   0],
+        [255,  75,   0, ...,   0,   0,   0]], dtype=uint8)
+
+        Access the metadata related to selected dataset
+        >>> pvol.metadata['gain']
+        0.5
+        >>> pvol.metadata['towerheight']
+        33.0
+        """
+        elangle_path = None
+        try:
+            search_results = self.search('elangle', self.elangles[elangle])
+        except KeyError:
+            return None
+
+        if search_results == []:
+            print('Elevation angle {} is not found from file'.format(elangle))
+            print('File contains elevation angles:{}'.format(self.elangles))
+        else:
+            elangle_path = search_results[0]
+                    
+        if elangle_path is not None:
+            dataset_root = re.search( '^/dataset[0-9]+/', elangle_path).group(0) 
+            quantity_path = None
+            search_results = self.search('quantity', quantity)
+
+            for path in search_results:
+                if dataset_root in path:
+                    quantity_path = path
+                    break
+                    
+            if quantity_path is not None:
+                dataset_path = re.search('^/dataset[0-9]+/data[0-9]/', quantity_path).group(0)            
+                dataset_path = os.path.join(dataset_path, 'data')
+                self.dataset = dataset_path
+                
+                return self.selected_dataset_path
+    
     def sector(self, start_ray, end_ray, start_distance=None, end_distance=None, units='b'):
         """Slices a sector from the selected dataset.
         
@@ -346,6 +392,31 @@ class OdimPVOL(HiisiHDF):
 class OdimCOMP(HiisiHDF):
     """
     Container class for odim composite files
+
+        Examples
+        --------
+        Select DBZH composite        
+        
+        >>> comp = OdimCOMP('comp.h5')
+        >>> dataset_path = comp.select_dataset('DBZH')
+        >>> print(dataset_path)
+        >>> '/dataset1/data1/data'
+
+        Access the selected dataset
+        >>> print(comp.dataset)
+        [[255 255 255 ..., 255 255 255]
+        [255 255 255 ..., 255 255 255]
+        [255 255 255 ..., 255 255 255]
+        ..., 
+        [255 255 255 ..., 255 255 255]
+        [255 255 255 ..., 255 255 255]
+        [255 255 255 ..., 255 255 255]]
+
+        Access the metadata associated to the selected dataset
+        >>> print(comp.metadata['quantity'])
+        'DBZH'
+        >>> comp.metadata['projdef']
+        ' +proj=aeqd +lon_0=24.869 +lat_0=60.2706 +ellps=WGS84'
     """
     def __init__(self, *args, **kwargs):
         super(OdimCOMP, self).__init__(*args, **kwargs)
@@ -376,74 +447,14 @@ class OdimCOMP(HiisiHDF):
         if self._metadata is not None:
             return self._metadata
         else:
-            self.metadata = self.selected_dataset_metadata()
+            self.metadata = self._create_selected_dataset_metadata()
             return self._metadata
 
     @metadata.setter
     def metadata(self, metadata_dict):
-        self._metadata = metadata_dict    
+        self._metadata = metadata_dict
 
-    def select_dataset(self, quantity):
-        """
-        Selects the matching dataset and returns its path.
-        
-        After the dataset has been selected, its values can be accessed trough
-        dataset member variable.
-        
-        Parameters
-        ----------
-        quantity : str
-            name of the quantity
-            
-        Examples
-        --------
-        Select DBZH composite        
-        
-        >>> comp = OdimCOMP('comp.h5')
-        >>> dataset_path = comp.select_dataset('DBZH')
-        >>> print(dataset_path)
-        >>> '/dataset1/data1/data'
-        >>> print(comp.dataset)
-        [[255 255 255 ..., 255 255 255]
-        [255 255 255 ..., 255 255 255]
-        [255 255 255 ..., 255 255 255]
-        ..., 
-        [255 255 255 ..., 255 255 255]
-        [255 255 255 ..., 255 255 255]
-        [255 255 255 ..., 255 255 255]]
-        """
-        
-        # Files with a following dataset structure.
-        # Location of 'quantity' attribute: /dataset1/data1/what
-        # Dataset path structure: /dataset1/data1/data
-        search_results = self.search('quantity', quantity)
-        try:
-            quantity_path = search_results[0]
-        except IndexError:
-            print('Attribute quantity=\'{}\' was not found from file'.format(quantity))
-            self.dataset = None
-            return None
-        full_dataset_path = quantity_path.replace('/what', '/data')
-
-        try:
-            self.dataset = full_dataset_path
-            return self.selected_dataset_path
-        except KeyError:
-            # Files with following dataset structure
-            # Location of 'quantity' attribute: /dataset1/what
-            # Dataset path structure: /dataset1/data1/data 
-            dataset_root_path = re.search( '^/dataset[0-9]+/', quantity_path).group(0)
-            dataset_paths = self.datasets()
-            for ds_path in dataset_paths:
-                try:
-                    full_dataset_path = re.search( '^{}data[0-9]+/data'.format(dataset_root_path), ds_path).group(0)
-                    break
-                except:
-                    pass
-            self.dataset = full_dataset_path
-            return self.selected_dataset_path
-            
-    def selected_dataset_metadata(self):
+    def _create_selected_dataset_metadata(self):
         """Retrieves metadata related to the selected dataset.
         
         Search algorithm starts from the dataset and propagates towards the root.
@@ -476,6 +487,75 @@ class OdimCOMP(HiisiHDF):
 
         return metadata
 
+    def select_dataset(self, quantity):
+        """
+        Selects the matching dataset and returns its path.
+        
+        After the dataset has been selected, its values can be accessed trough
+        'dataset' property. The metadata associated to the selected dataset 
+        can be accessed through 'metadata' property.
+        
+        Parameters
+        ----------
+        quantity : str
+            name of the quantity
+            
+        Examples
+        --------
+        Select DBZH composite        
+        
+        >>> comp = OdimCOMP('comp.h5')
+        >>> dataset_path = comp.select_dataset('DBZH')
+        >>> print(dataset_path)
+        >>> '/dataset1/data1/data'
+
+        Access the selected dataset
+        >>> print(comp.dataset)
+        [[255 255 255 ..., 255 255 255]
+        [255 255 255 ..., 255 255 255]
+        [255 255 255 ..., 255 255 255]
+        ..., 
+        [255 255 255 ..., 255 255 255]
+        [255 255 255 ..., 255 255 255]
+        [255 255 255 ..., 255 255 255]]
+
+        Access the metadata associated to the selected dataset
+        >>> print(comp.metadata['quantity'])
+        'DBZH'
+        >>> comp.metadata['projdef']
+        ' +proj=aeqd +lon_0=24.869 +lat_0=60.2706 +ellps=WGS84'
+        """
+        
+        # Files with a following dataset structure.
+        # Location of 'quantity' attribute: /dataset1/data1/what
+        # Dataset path structure: /dataset1/data1/data
+        search_results = self.search('quantity', quantity)
+        try:
+            quantity_path = search_results[0]
+        except IndexError:
+            print('Attribute quantity=\'{}\' was not found from file'.format(quantity))
+            self.dataset = None
+            return None
+        full_dataset_path = quantity_path.replace('/what', '/data')
+
+        try:
+            self.dataset = full_dataset_path
+            return self.selected_dataset_path
+        except KeyError:
+            # Files with following dataset structure
+            # Location of 'quantity' attribute: /dataset1/what
+            # Dataset path structure: /dataset1/data1/data 
+            dataset_root_path = re.search( '^/dataset[0-9]+/', quantity_path).group(0)
+            dataset_paths = self.datasets()
+            for ds_path in dataset_paths:
+                try:
+                    full_dataset_path = re.search( '^{}data[0-9]+/data'.format(dataset_root_path), ds_path).group(0)
+                    break
+                except:
+                    pass
+            self.dataset = full_dataset_path
+            return self.selected_dataset_path
+            
 '''                     
 class OdimVPR(HiisiHDF):
     """
