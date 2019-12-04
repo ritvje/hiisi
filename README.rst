@@ -9,7 +9,7 @@ Using HiisiHDF file handle, users can search metadata from the file
 without any prior knowledge of the file structure. In addition, HiisiHDF contains
 methods for listing the datasets and groups in the file and a convenient method
 for creating and expanding hdf5 files.
- 
+
 HiisiHDF can be used as such or it can be used as base class for creating more
 specialized file handles for different types of data files. An example of custom
 data file handle is the hiisi.odim module that contains file handles for reading
@@ -58,7 +58,7 @@ Find the names of the groups that contain an attribute with a certain value::
     '/dataset3/data2/what'
     '/dataset4/data2/what'
     '/dataset5/data2/what'
-        
+
 Find the names of the groups that contain a numerical attribute
 with a certain value or a value that is within the given tolerance::
 
@@ -68,7 +68,7 @@ with a certain value or a value that is within the given tolerance::
 
 Installation
 ------------
-Hiisi is dependent on **numpy** and **h5py** packages. If you have these dependencies already 
+Hiisi is dependent on **numpy** and **h5py** packages. If you have these dependencies already
 installed you can simply run ``pip install hiisi``.
 
 Installing the dependencies and the package
@@ -81,7 +81,27 @@ Installing the dependencies and the package
     $ pip install h5py
     $ pip install hiisi
 
+Installing locally (replace ``<repo-url>`` with the correct repository url):
+
+.. code-block:: bash
+
+    $ install pip
+    $ pip install numpy
+    $ pip install Cython
+    $ pip install h5py
+    $ git clone <repo-url>
+    $ cd hiisi
+    $ pip install -e .
+
+To install the package permanently in a conda environment, instead of the last command do the following:
+
+.. code-block:: bash
+
+    $ conda activate <env-name>
+    $ conda install conda-build # required for running the following command
+    $ conda develop .
+
+
 License
 -------
 This code is licensed under the MIT open source license.
-
