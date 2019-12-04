@@ -84,11 +84,11 @@ class HiisiHDF(h5py.File):
 
     def groups(self):
         """Method returns a list of all goup paths
-        
+
         Examples
-        --------        
+        --------
         >>> for group in h5f.groups():
-                print(group)        
+                print(group)
         '/'
         '/dataset1'
         '/dataset1/data1'
@@ -102,7 +102,7 @@ class HiisiHDF(h5py.File):
     def attr_gen(self, attr):
         """Returns attribute generator that yields namedtuples containing
         path value pairs
-        
+
         Parameters
         ----------
         attr : str
@@ -128,19 +128,25 @@ class HiisiHDF(h5py.File):
         HiisiHDF.CACHE['search_attribute'] = attr
         HiisiHDF._find_attr_paths('/', self['/']) # Check root attributes
         self.visititems(HiisiHDF._find_attr_paths)
-        path_attr_gen = (PathValue(attr_path, self[attr_path].attrs.get(attr)) for attr_path in HiisiHDF.CACHE['attribute_paths'])
+        # In python3, the attributes returned by h5py are bytes instead of
+        # strings (see https://github.com/h5py/h5py/issues/379) so check
+        # for that
+        path_attr_gen = (PathValue(attr_path, self[attr_path].attrs.get(attr).astype(str))
+                         if isinstance(self[attr_path].attrs.get(attr), bytes)
+                         else PathValue(attr_path, self[attr_path].attrs.get(attr))
+                         for attr_path in HiisiHDF.CACHE['attribute_paths'])
         return path_attr_gen
 
 
     def create_from_filedict(self, filedict):
         """
         Creates h5 file from dictionary containing the file structure.
-        
+
         Filedict is a regular dictinary whose keys are hdf5 paths and whose
         values are dictinaries containing the metadata and datasets. Metadata
         is given as normal key-value -pairs and dataset arrays are given using
         'DATASET' key. Datasets must be numpy arrays.
-                
+
         Method can also be used to append existing hdf5 file. If the file is
         opened in read only mode, method does nothing.
 
@@ -155,11 +161,11 @@ class HiisiHDF(h5py.File):
 
         """
         if self.mode in ['r+','w', 'w-', 'x', 'a']:
-            for h5path, path_content in filedict.iteritems():
-                if path_content.has_key('DATASET'):
+            for h5path, path_content in filedict.items():
+                if 'DATASET' in path_content:
                     # If path exist, write only metadata
                     if h5path in self:
-                        for key, value in path_content.iteritems():
+                        for key, value in path_content.items():
                             if key != 'DATASET':
                                 self[h5path].attrs[key] = value
                     else:
@@ -169,15 +175,15 @@ class HiisiHDF(h5py.File):
                             group = self[os.path.dirname(h5path)]
                             pass # This pass has no effect?
                         new_dataset = group.create_dataset(os.path.basename(h5path), data=path_content['DATASET'])
-                        for key, value in path_content.iteritems():
+                        for key, value in path_content.items():
                             if key != 'DATASET':
                                 new_dataset.attrs[key] = value
                 else:
-                    try:  
+                    try:
                         group = self.create_group(h5path)
                     except ValueError:
                         group = self[h5path]
-                    for key, value in path_content.iteritems():
+                    for key, value in path_content.items():
                         group.attrs[key] = value
 
     def search(self, attr, value, tolerance=0):
@@ -189,7 +195,7 @@ class HiisiHDF(h5py.File):
             name of the attribute
         value : str or numerical value
             value of the searched attribute
-        
+
         Keywords
         --------
         tolerance : float
@@ -207,7 +213,7 @@ class HiisiHDF(h5py.File):
         --------
 
         >>> for result in h5f.search('elangle', 0.5, 0.1):
-                print(result)        
+                print(result)
         '/dataset1/where'
 
         >>> for result in h5f.search('quantity', 'DBZH'):
@@ -217,7 +223,7 @@ class HiisiHDF(h5py.File):
         '/dataset3/data2/what'
         '/dataset4/data2/what'
         '/dataset5/data2/what'
-        
+
         """
         found_paths = []
         gen = self.attr_gen(attr)
@@ -236,4 +242,3 @@ class HiisiHDF(h5py.File):
                     found_paths.append(path_attr_pair.path)
 
         return found_paths
-
