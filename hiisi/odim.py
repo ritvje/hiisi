@@ -4,7 +4,8 @@ Odim is a module for handling radar data files that follow OPERA ODIM data schem
 More information about the Odim data scheme can be found:
 http://www.eumetnet.eu/sites/default/files/OPERA2014_O4_ODIM_H5-v2.2.pdf
 """
-from hiisi import HiisiHDF
+#from . import HiisiHDF
+from .hiisihdf import HiisiHDF
 import h5py
 import numpy as np
 import re
