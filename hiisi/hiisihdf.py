@@ -155,11 +155,11 @@ class HiisiHDF(h5py.File):
 
         """
         if self.mode in ['r+','w', 'w-', 'x', 'a']:
-            for h5path, path_content in filedict.iteritems():
-                if path_content.has_key('DATASET'):
+            for h5path, path_content in filedict.items():
+                if 'DATASET' in path_content.keys():
                     # If path exist, write only metadata
                     if h5path in self:
-                        for key, value in path_content.iteritems():
+                        for key, value in path_content.items():
                             if key != 'DATASET':
                                 self[h5path].attrs[key] = value
                     else:
@@ -169,7 +169,7 @@ class HiisiHDF(h5py.File):
                             group = self[os.path.dirname(h5path)]
                             pass # This pass has no effect?
                         new_dataset = group.create_dataset(os.path.basename(h5path), data=path_content['DATASET'])
-                        for key, value in path_content.iteritems():
+                        for key, value in path_content.items():
                             if key != 'DATASET':
                                 new_dataset.attrs[key] = value
                 else:
@@ -177,7 +177,7 @@ class HiisiHDF(h5py.File):
                         group = self.create_group(h5path)
                     except ValueError:
                         group = self[h5path]
-                    for key, value in path_content.iteritems():
+                    for key, value in path_content.items():
                         group.attrs[key] = value
 
     def search(self, attr, value, tolerance=0):

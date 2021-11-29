@@ -20,7 +20,7 @@ class Test(unittest.TestCase):
         self.data_filename = 'hiisi_test_data.h5'
 
         self.create_hdf5_test_data()
-        self.h5file = hiisi.hiisi.HiisiHDF(self.data_filename, 'r')
+        self.h5file = hiisi.HiisiHDF(self.data_filename, 'r')
         print('run setUp')
         
         
@@ -70,19 +70,19 @@ class Test(unittest.TestCase):
         self.assertFalse(self.h5file.attr_exists('not_existing_attr'))    
 
     def test_datasets(self):
-        self.assertItemsEqual(list(self.h5file.datasets()), self.dataset_paths)
+        assert list(self.h5file.datasets()) == self.dataset_paths
         
     def test_datasets_no_datasets_found(self):
         with hiisi.HiisiHDF('tmp.h5', 'w') as h5f:
-            self.assertItemsEqual(list(h5f.datasets()), [])
+            assert list(h5f.datasets()) == []
         os.remove('tmp.h5')
         
     def test_groups(self):
-        self.assertItemsEqual(list(self.h5file.groups()), self.group_paths)
+        assert list(self.h5file.groups()) == self.group_paths
         
     def test_groups_no_groups_found(self):
         with hiisi.HiisiHDF('tmp.h5', 'w') as h5f:
-            self.assertItemsEqual(h5f.groups(), ['/'])
+            assert h5f.groups() == ['/']
         os.remove('tmp.h5')
 
     def test_attr_gen(self):
@@ -90,12 +90,12 @@ class Test(unittest.TestCase):
         attr_items = []     
         for i in attr_gen:
             attr_items.append((i.path, i.value))
-        self.assertListEqual(attr_items, self.reoccuring_attr_items)
+        assert attr_items == self.reoccuring_attr_items
 
     def test_attr_gen_no_match(self):
         attr_gen = self.h5file.attr_gen('not_existing_attr')        
         with self.assertRaises(StopIteration):
-            attr_gen.next()
+            next(attr_gen)
             
     def test_create_from_filedict_new_file(self):
         filename = 'create_from_filedict_test.h5'
@@ -106,38 +106,36 @@ class Test(unittest.TestCase):
             file_dict['/dataset1/data1/what'] = {'D':123}
             h5f.create_from_filedict(file_dict)        
 
-        with hiisi.HiisiHDF(filename, 'r') as h5f:      
-            self.assertEqual(h5f['/'].attrs['A'], 1)
-            self.assertEqual(h5f['/'].attrs['B'], 2)
-            self.assertEqual(h5f['/dataset1/data1/data'].attrs['C'], 'c')
+        with hiisi.HiisiHDF(filename, 'r') as h5f:
+            assert h5f['/'].attrs['A'] == 1
+            assert h5f['/'].attrs['B'] == 2
+            assert h5f['/dataset1/data1/data'].attrs['C'] == 'c'
             np.testing.assert_array_equal(h5f['/dataset1/data1/data'][:], np.arange(9).reshape((3,3)))
-            self.assertEqual(h5f['/dataset1/data1/what'].attrs['D'], 123)
+            assert h5f['/dataset1/data1/what'].attrs['D'] == 123
         os.remove(filename)
 
     
-    def test_create_from_filedict_append_new_goup(self):
-        filename = 'create_from_filedict_test.h5'
+    def test_create_from_filedict_append_new_group(self):
+        filename = './create_from_filedict_test.h5'
         # Create the file
         with hiisi.HiisiHDF(filename, 'w') as h5f:
             file_dict = {}
             file_dict['/'] = {'A':1, 'B':2}
             file_dict['/dataset1/data1/data'] = {'DATASET':np.arange(9).reshape((3,3)), 'C':'c'}
             file_dict['/dataset1/data1/what'] = {'D':123}
-            h5f.create_from_filedict(file_dict)        
-
+            h5f.create_from_filedict(file_dict)
         # Append the file created above
-        with hiisi.HiisiHDF(filename) as h5f:
+        with hiisi.HiisiHDF(filename, 'a') as h5f:
             h5f.create_from_filedict({'/added_group':{'attr1':1}})
             
         # Check the results
         with hiisi.HiisiHDF(filename, 'r') as h5f:      
-            self.assertEqual(h5f['/'].attrs['A'], 1)
-            self.assertEqual(h5f['/'].attrs['B'], 2)
-            self.assertEqual(h5f['/dataset1/data1/data'].attrs['C'], 'c')
+            assert h5f['/'].attrs['A'] == 1
+            assert h5f['/'].attrs['B'] == 2
+            assert h5f['/dataset1/data1/data'].attrs['C'] == 'c'
             np.testing.assert_array_equal(h5f['/dataset1/data1/data'][:], np.arange(9).reshape((3,3)))
-            self.assertEqual(h5f['/dataset1/data1/what'].attrs['D'], 123)
-            self.assertEqual(h5f['/added_group'].attrs['attr1'], 1)
-            
+            assert h5f['/dataset1/data1/what'].attrs['D'] == 123
+            assert h5f['/added_group'].attrs['attr1'] == 1            
         os.remove(filename)
         
     def test_create_from_filedict_modify_existing_content(self):
@@ -151,40 +149,39 @@ class Test(unittest.TestCase):
             h5f.create_from_filedict(file_dict)        
 
         # Append the file created above
-        with hiisi.HiisiHDF(filename) as h5f:
+        with hiisi.HiisiHDF(filename, 'a') as h5f:
             h5f.create_from_filedict({'/dataset1/data1/data':{'C':'new_value'}})
             
         # Check the results
         with hiisi.HiisiHDF(filename, 'r') as h5f:      
-            self.assertEqual(h5f['/'].attrs['A'], 1)
-            self.assertEqual(h5f['/'].attrs['B'], 2)
-            self.assertEqual(h5f['/dataset1/data1/data'].attrs['C'], 'new_value')
+            assert h5f['/'].attrs['A'] == 1
+            assert h5f['/'].attrs['B'] == 2
+            assert h5f['/dataset1/data1/data'].attrs['C'] == 'new_value'
             np.testing.assert_array_equal(h5f['/dataset1/data1/data'][:], np.arange(9).reshape((3,3)))
-            self.assertEqual(h5f['/dataset1/data1/what'].attrs['D'], 123)
-            
+            assert h5f['/dataset1/data1/what'].attrs['D'] == 123
         os.remove(filename)
            
     def test_search_no_match(self):
-        self.assertListEqual([], list(self.h5file.search('madeupkey', 'xyz')))
+        assert [] == list(self.h5file.search('madeupkey', 'xyz'))
             
     def test_search_single_match(self):
-        self.assertListEqual([self.unique_attr_path], list(self.h5file.search('unique_attr', self.unique_attr_value)))
+        assert [self.unique_attr_path] == list(self.h5file.search('unique_attr', self.unique_attr_value))
             
     def test_search_multiple_matches(self):
         filename = 'test_search_multiple_matches.h5'
-        with hiisi.HiisiHDF(filename) as h5f:
+        with hiisi.HiisiHDF(filename, 'w') as h5f:
             groups = ['/group1', '/group2', '/basegroup/group1']
             for g in groups:
                 group = h5f.create_group(g)
                 group.attrs['attribute']  = 'attribute'
             
-        with hiisi.HiisiHDF(filename) as h5f:
-            self.assertListEqual(sorted(groups), sorted(list(h5f.search('attribute', 'attribute'))))
+        with hiisi.HiisiHDF(filename, 'r') as h5f:
+            assert sorted(groups) == sorted(list(h5f.search('attribute', 'attribute')))
         os.remove(filename)
             
     def test_search_numerical_attribute_within_tolerance(self):
         filename = 'test_search_numerical_attribute.h5'
-        with hiisi.HiisiHDF(filename) as h5f:
+        with hiisi.HiisiHDF(filename, 'w') as h5f:
             group = h5f.create_group('/group1')
             group.attrs['attribute']  = 7.3
             group = h5f.create_group('/group2')
@@ -192,13 +189,13 @@ class Test(unittest.TestCase):
             group = h5f.create_group('/basegroup/group1')        
             group.attrs['attribute']  = 0.5245
 
-        with hiisi.HiisiHDF(filename) as h5f:        
-            self.assertListEqual(['/basegroup/group1'], list(h5f.search('attribute', 0.5, 0.1)))
+        with hiisi.HiisiHDF(filename, 'r') as h5f:        
+            assert ['/basegroup/group1'] == list(h5f.search('attribute', 0.5, 0.1))
         os.remove(filename)
 
     def test_search_numerical_attribute_outside_tolerance(self):            
         filename = 'test_search_numerical_attribute.h5'
-        with hiisi.HiisiHDF(filename) as h5f:
+        with hiisi.HiisiHDF(filename, 'w') as h5f:
             group = h5f.create_group('/group1')
             group.attrs['attribute']  = 7.3
             group = h5f.create_group('/group2')
@@ -206,8 +203,8 @@ class Test(unittest.TestCase):
             group = h5f.create_group('/basegroup/group1')        
             group.attrs['attribute']  = 0.5245
 
-        with hiisi.HiisiHDF(filename) as h5f:        
-            self.assertListEqual([], list(h5f.search('attribute', 7, 0.1)))
+        with hiisi.HiisiHDF(filename,'r') as h5f:
+            assert [] == list(h5f.search('attribute', 7, 0.1))
         os.remove(filename)
         
     
