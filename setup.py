@@ -49,6 +49,7 @@ setup(name='hiisi',
         'Programming Language :: Python :: 2.7'
         ],
       keywords='hdf5 hdf hiisi weather radar odim',
-      packages=find_packages(exclude=['docs','tests*']),
-      #install_requires=['numpy','Cython','h5py'],
+      #packages=find_packages(exclude=['docs','tests*']),
+      packages=['hiisi','tests']
+      #install_requires=['h5py'],
     )
