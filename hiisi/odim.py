@@ -58,9 +58,9 @@ class OdimPVOL(HiisiHDF):
         """
         elang_list = list(self.attr_gen('elangle'))
         try:
-            elevation_angles = sorted(zip(*elang_list)[1])
+            elevation_angles = sorted(list(zip(*elang_list))[1])
             n_elangles = len(elevation_angles)
-            self.elangles = dict(zip(list(string.ascii_uppercase[:n_elangles]), elevation_angles))
+            self.elangles = dict(list(zip(list(string.ascii_uppercase[:n_elangles]), elevation_angles)))
         except IndexError:
             self.elangles = {}
         

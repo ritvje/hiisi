@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import h5py
+import numpy as np
 import os
 from collections import namedtuple
 PathValue = namedtuple('PathValue', ['path', 'value'])
@@ -230,6 +231,9 @@ class HiisiHDF(h5py.File):
                 type_name = path_attr_pair.value.dtype.name
             if 'int' in type_name or 'float' in type_name:
                 if abs(path_attr_pair.value - value) <= tolerance:
+                    found_paths.append(path_attr_pair.path)
+            elif 'bytes' in type_name:
+                if np.bytes_(value) == path_attr_pair.value:
                     found_paths.append(path_attr_pair.path)
             else:
                 if path_attr_pair.value == value:

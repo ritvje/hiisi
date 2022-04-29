@@ -25,7 +25,7 @@ class Test(unittest.TestCase):
         self.assertDictEqual(self.odim_file.elangles, comparison_dict)
     
     def test__set_elangles_no_elangles(self):        
-        with hiisi.OdimPVOL('empty_file.h5') as pvol:
+        with hiisi.OdimPVOL('empty_file.h5', 'w') as pvol:
             self.assertDictEqual(pvol.elangles, {})
             
     def test_select_dataset(self):
