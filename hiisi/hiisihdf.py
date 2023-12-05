@@ -140,8 +140,9 @@ class HiisiHDF(h5py.File):
         Filedict is a regular dictinary whose keys are hdf5 paths and whose
         values are dictinaries containing the metadata and datasets. Metadata
         is given as normal key-value -pairs and dataset arrays are given using
-        'DATASET' key. Datasets must be numpy arrays.
-                
+        'DATASET' key. Datasets must be numpy arrays. If "COMPRESSION" and "COMPRESSION_OPTS"
+        keys are given, dataset is compressed using the given compression.
+
         Method can also be used to append existing hdf5 file. If the file is
         opened in read only mode, method does nothing.
 
@@ -168,8 +169,13 @@ class HiisiHDF(h5py.File):
                             group = self.create_group(os.path.dirname(h5path))
                         except ValueError:
                             group = self[os.path.dirname(h5path)]
-                            pass # This pass has no effect?
-                        new_dataset = group.create_dataset(os.path.basename(h5path), data=path_content['DATASET'])
+                            pass  # This pass has no effect?
+                        new_dataset = group.create_dataset(
+                            os.path.basename(h5path),
+                            data=path_content["DATASET"],
+                            compression=path_content.get("COMPRESSION", None),
+                            compression_opts=path_content.get("COMPRESSION_OPTS", None),
+                        )
                         for key, value in path_content.items():
                             if key != 'DATASET':
                                 new_dataset.attrs[key] = value
